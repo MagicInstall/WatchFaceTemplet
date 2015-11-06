@@ -41,6 +41,10 @@ import java.util.concurrent.TimeUnit;
  * devices with low-bit ambient mode, the hands are drawn without anti-aliasing in ambient mode.
  */
 public class TempletWatchFace extends CanvasWatchFaceService {
+    /*+++++++++++++++++++ Wing ++++++++++++++++++++*/
+    private WatchFaceDrawer mFaceDrawer = null;
+    /*---------------------------------------------*/
+
     /**
      * Update rate in milliseconds for interactive mode. We update once a second to advance the
      * second hand.
@@ -102,6 +106,11 @@ public class TempletWatchFace extends CanvasWatchFaceService {
             mHandPaint.setStrokeCap(Paint.Cap.ROUND);
 
             mTime = new Time();
+
+            /*+++++++++++++++++++ Wing ++++++++++++++++++++*/
+            mFaceDrawer = new InformationsDrawer(); // 重点
+            /*---------------------------------------------*/
+
         }
 
         @Override
@@ -176,6 +185,10 @@ public class TempletWatchFace extends CanvasWatchFaceService {
             float hrX = (float) Math.sin(hrRot) * hrLength;
             float hrY = (float) -Math.cos(hrRot) * hrLength;
             canvas.drawLine(centerX, centerY, centerX + hrX, centerY + hrY, mHandPaint);
+
+            /*+++++++++++++++++++ Wing ++++++++++++++++++++*/
+            mFaceDrawer.Draw(canvas, bounds);
+            /*---------------------------------------------*/
         }
 
         @Override
