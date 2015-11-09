@@ -74,6 +74,9 @@ public class TempletWatchFace extends CanvasWatchFaceService {
             public void onReceive(Context context, Intent intent) {
                 mTime.clear(intent.getStringExtra("time-zone"));
                 mTime.setToNow();
+            /*+++++++++++++++++++ Wing ++++++++++++++++++++*/
+                mFaceDrawer.setTimeZone(intent.getStringExtra("time-zone"));
+            /*---------------------------------------------*/
             }
         };
         boolean mRegisteredTimeZoneReceiver = false;
@@ -108,7 +111,7 @@ public class TempletWatchFace extends CanvasWatchFaceService {
             mTime = new Time();
 
             /*+++++++++++++++++++ Wing ++++++++++++++++++++*/
-            mFaceDrawer = new InformationsDrawer(); // 重点
+            mFaceDrawer = new InformationsDrawer(getAssets()); // 重点
             /*---------------------------------------------*/
 
         }
@@ -122,18 +125,38 @@ public class TempletWatchFace extends CanvasWatchFaceService {
         @Override
         public void onPropertiesChanged(Bundle properties) {
             super.onPropertiesChanged(properties);
+
+            System.out.print("onPropertiesChanged-mLowBitAmbient:");
+            System.out.print(mLowBitAmbient);
             mLowBitAmbient = properties.getBoolean(PROPERTY_LOW_BIT_AMBIENT, false);
+            System.out.print("->");
+            System.out.println(mLowBitAmbient);
         }
 
+        /**
+         * 每分钟触发一次
+         */
         @Override
         public void onTimeTick() {
             super.onTimeTick();
+            /*+++++++++++++++++++ Wing ++++++++++++++++++++*/
+            System.out.println("onTimeTick");
+            mFaceDrawer.setTimeToNow(); // 更新时间
+            /*---------------------------------------------*/
             invalidate();
         }
 
+        /**
+         * 响应环境模式和交互模式间切换
+         * @param inAmbientMode
+         */
         @Override
         public void onAmbientModeChanged(boolean inAmbientMode) {
             super.onAmbientModeChanged(inAmbientMode);
+            /*+++++++++++++++++++ Wing ++++++++++++++++++++*/
+            System.out.print("onAmbientModeChanged-mAmbient:");
+            System.out.print(mAmbient);
+            /*---------------------------------------------*/
             if (mAmbient != inAmbientMode) {
                 mAmbient = inAmbientMode;
                 if (mLowBitAmbient) {
@@ -141,6 +164,12 @@ public class TempletWatchFace extends CanvasWatchFaceService {
                 }
                 invalidate();
             }
+            /*+++++++++++++++++++ Wing ++++++++++++++++++++*/
+            System.out.print("->");
+            System.out.println(mAmbient);
+            mFaceDrawer.IsAmbient = mAmbient;
+            /*---------------------------------------------*/
+
 
             // Whether the timer should be running depends on whether we're visible (as well as
             // whether we're in ambient mode), so we may need to start or stop the timer.
@@ -195,6 +224,11 @@ public class TempletWatchFace extends CanvasWatchFaceService {
         public void onVisibilityChanged(boolean visible) {
             super.onVisibilityChanged(visible);
 
+            /*+++++++++++++++++++ Wing ++++++++++++++++++++*/
+            System.out.print("onVisibilityChanged-visible:");
+            System.out.println(visible);
+            mFaceDrawer.IsVisible = visible;
+            /*---------------------------------------------*/
             if (visible) {
                 registerReceiver();
 
