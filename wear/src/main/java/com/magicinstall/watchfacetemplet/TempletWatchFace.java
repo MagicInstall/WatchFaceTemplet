@@ -111,7 +111,7 @@ public class TempletWatchFace extends CanvasWatchFaceService {
             mTime = new Time();
 
             /*+++++++++++++++++++ Wing ++++++++++++++++++++*/
-            mFaceDrawer = new InformationsDrawer(getAssets()); // 重点
+            mFaceDrawer = new InformationsDrawer(resources); // 重点
             /*---------------------------------------------*/
 
         }

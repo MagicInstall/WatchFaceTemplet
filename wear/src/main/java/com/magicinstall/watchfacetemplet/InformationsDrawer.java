@@ -1,6 +1,6 @@
 package com.magicinstall.watchfacetemplet;
 
-import android.content.res.AssetManager;
+import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Rect;
@@ -8,6 +8,7 @@ import android.graphics.Typeface;
 import android.text.Layout;
 import android.text.StaticLayout;
 import android.text.TextPaint;
+import android.util.Size;
 
 import java.text.DateFormat;
 import java.util.Locale;
@@ -28,10 +29,11 @@ public class InformationsDrawer extends WatchFaceDrawer{
 //    private float mFPS;
     private long  mPrevFrameMs;
 
-    /**
-     *
-     */
-    public InformationsDrawer(AssetManager assetManager) {
+    private Size mDisplaySize;
+
+
+    public InformationsDrawer(Resources resources) {
+        super(resources);
 //        mDrawString = ("1234567890\n" +
 //                "ABCDEFGHIJKLMNOPQRSTUVWXYZ\n" +
 //                "abcdefghijklmnopqrstuvwxyz\n" +
@@ -41,7 +43,7 @@ public class InformationsDrawer extends WatchFaceDrawer{
 //        Typeface mFace = Typeface.create("Roboto", Typeface.NORMAL);
 
         // 指定assets 目录入边嘅TTF字体
-        Typeface mFace = Typeface.createFromAsset(assetManager, "fonts/Roboto-Thin.ttf");
+        Typeface mFace = Typeface.createFromAsset(mResources.getAssets(), "fonts/Roboto-Thin.ttf");
 
         // 设置字体画笔
         mTextPaint = new TextPaint();
@@ -49,8 +51,13 @@ public class InformationsDrawer extends WatchFaceDrawer{
         mTextPaint.setTextSize(14);
         mTextPaint.setTypeface(mFace); // 指定字体
 
+        // 取得屏幕尺寸
+        mDisplaySize = new Size(mDisplayMetrics.widthPixels, mDisplayMetrics.heightPixels);
+//        mDisplayMetrics = new DisplayMetrics();
+//        mDisplayMetrics = resources.getDisplayMetrics();
+
         // 使用StaticLayout 显示垂直居中嘅多行文本
-        mTextLayout = new StaticLayout("", mTextPaint, 320, Layout.Alignment.ALIGN_CENTER, 1.0f, 0.0f, false);
+        mTextLayout = new StaticLayout("", mTextPaint, mDisplaySize.getWidth(), Layout.Alignment.ALIGN_CENTER, 1.0f, 0.0f, false);
 
         // 更新时间
 //        mCalendar = new GregorianCalendar();
@@ -78,7 +85,7 @@ public class InformationsDrawer extends WatchFaceDrawer{
 
         // 帧率
 //        mFPS = (mPrevFrameMs - System.currentTimeMillis()) / 1000.0f;
-        String str_FPS = "FPS:" +
+        String str_FPS = " FPS:" +
                 String.valueOf(1000.0f / (System.currentTimeMillis()- mPrevFrameMs))
                 + "\n";
         mPrevFrameMs = System.currentTimeMillis();
@@ -86,10 +93,10 @@ public class InformationsDrawer extends WatchFaceDrawer{
         mTextLayout = new StaticLayout(
                 str_visible +
                 str_ambient +
-                str_FPS +
+                mDisplaySize.toString() + str_FPS +
                 "\n\n\n\n\n\n" +
                 mDateString,
-                mTextPaint, 320, Layout.Alignment.ALIGN_CENTER, 1.0f, 0.0f, false);
+                mTextPaint, mDisplaySize.getWidth(), Layout.Alignment.ALIGN_CENTER, 1.0f, 0.0f, false);
 
     }
 

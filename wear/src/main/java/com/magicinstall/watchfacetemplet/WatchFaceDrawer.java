@@ -1,7 +1,9 @@
 package com.magicinstall.watchfacetemplet;
 
+import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Rect;
+import android.util.DisplayMetrics;
 
 import java.util.Calendar;
 import java.util.GregorianCalendar;
@@ -15,10 +17,22 @@ public abstract class WatchFaceDrawer {
     public boolean IsVisible;
     public boolean IsAmbient;
 
+    /**
+     * 资源访问对象
+     */
+    protected Resources mResources;
+
+    /**
+     * 屏幕参数对象
+     */
+    protected DisplayMetrics mDisplayMetrics;
+
     private GregorianCalendar mCalendar;
 
-    public WatchFaceDrawer() {
+    public WatchFaceDrawer(Resources resources) {
+        mResources = resources;
         mCalendar = new GregorianCalendar();
+        mDisplayMetrics = resources.getDisplayMetrics();
     }
 
 
