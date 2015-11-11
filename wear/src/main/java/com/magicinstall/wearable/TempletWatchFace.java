@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.magicinstall.watchfacetemplet;
+package com.magicinstall.wearable;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -61,7 +61,9 @@ public class TempletWatchFace extends CanvasWatchFaceService {
         return new Engine();
     }
 
-    private class Engine extends CanvasWatchFaceService.Engine {
+    private class Engine extends CanvasWatchFaceService.Engine
+            implements WatchFaceCallback /* Wing */
+    {
         Paint mBackgroundPaint;
         Paint mHandPaint;
         boolean mAmbient;
@@ -74,9 +76,10 @@ public class TempletWatchFace extends CanvasWatchFaceService {
             public void onReceive(Context context, Intent intent) {
                 mTime.clear(intent.getStringExtra("time-zone"));
                 mTime.setToNow();
-            /*+++++++++++++++++++ Wing ++++++++++++++++++++*/
+                /*+++++++++++++++++++ Wing ++++++++++++++++++++*/
+                // 响应时区切换
                 mFaceDrawer.setTimeZone(intent.getStringExtra("time-zone"));
-            /*---------------------------------------------*/
+                /*---------------------------------------------*/
             }
         };
         boolean mRegisteredTimeZoneReceiver = false;
@@ -111,8 +114,7 @@ public class TempletWatchFace extends CanvasWatchFaceService {
             mTime = new Time();
 
             /*+++++++++++++++++++ Wing ++++++++++++++++++++*/
-            mFaceDrawer = new InformationsDrawer(resources, getBaseContext()); // 重点
-
+            mFaceDrawer = new InformationsDrawer(this, resources, getBaseContext());
             /*---------------------------------------------*/
 
         }
@@ -127,12 +129,20 @@ public class TempletWatchFace extends CanvasWatchFaceService {
         public void onPropertiesChanged(Bundle properties) {
             super.onPropertiesChanged(properties);
 
+            // Wing 暂时唔做哩个模式
             System.out.print("onPropertiesChanged-mLowBitAmbient:");
             System.out.print(mLowBitAmbient);
             mLowBitAmbient = properties.getBoolean(PROPERTY_LOW_BIT_AMBIENT, false);
             System.out.print("->");
             System.out.println(mLowBitAmbient);
         }
+
+        /*+++++++++++++++++++ Wing ++++++++++++++++++++*/
+        @Override
+        public void needPostInvalidate() {
+            postInvalidate();
+        }
+        /*---------------------------------------------*/
 
         /**
          * 每分钟触发一次
@@ -154,10 +164,6 @@ public class TempletWatchFace extends CanvasWatchFaceService {
         @Override
         public void onAmbientModeChanged(boolean inAmbientMode) {
             super.onAmbientModeChanged(inAmbientMode);
-            /*+++++++++++++++++++ Wing ++++++++++++++++++++*/
-            System.out.print("onAmbientModeChanged-mAmbient:");
-            System.out.print(mAmbient);
-            /*---------------------------------------------*/
             if (mAmbient != inAmbientMode) {
                 mAmbient = inAmbientMode;
                 if (mLowBitAmbient) {
@@ -165,12 +171,10 @@ public class TempletWatchFace extends CanvasWatchFaceService {
                 }
                 invalidate();
             }
-            /*+++++++++++++++++++ Wing ++++++++++++++++++++*/
-            System.out.print("->");
-            System.out.println(mAmbient);
-            mFaceDrawer.IsAmbient = mAmbient;
-            /*---------------------------------------------*/
 
+            /*+++++++++++++++++++ Wing ++++++++++++++++++++*/
+            mFaceDrawer.setIsAmbient(inAmbientMode);
+            /*---------------------------------------------*/
 
             // Whether the timer should be running depends on whether we're visible (as well as
             // whether we're in ambient mode), so we may need to start or stop the timer.
@@ -221,14 +225,16 @@ public class TempletWatchFace extends CanvasWatchFaceService {
             /*---------------------------------------------*/
         }
 
+        /**
+         * 响应可见模式切换
+         * @param visible
+         */
         @Override
         public void onVisibilityChanged(boolean visible) {
             super.onVisibilityChanged(visible);
 
             /*+++++++++++++++++++ Wing ++++++++++++++++++++*/
-            System.out.print("onVisibilityChanged-visible:");
-            System.out.println(visible);
-            mFaceDrawer.IsVisible = visible;
+            mFaceDrawer.setIsVisible(visible);
             /*---------------------------------------------*/
             if (visible) {
                 registerReceiver();
