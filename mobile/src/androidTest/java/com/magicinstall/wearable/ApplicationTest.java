@@ -1,4 +1,4 @@
-package com.magicinstall.watchfacetemplet;
+package com.magicinstall.wearable;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;
