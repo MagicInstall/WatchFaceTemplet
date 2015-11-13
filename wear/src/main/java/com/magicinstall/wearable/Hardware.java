@@ -5,6 +5,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.util.Log;
 
 import java.util.List;
 
@@ -30,6 +31,33 @@ interface SensorsEventCallback {
  */
 public class Hardware implements SensorEventListener {
     /**
+     * @param context 传入Engine 的BaseContext.
+     */
+    public Hardware(Context context) {
+        mContext = context;
+        mSensorManager = (SensorManager)context.getSystemService(Context.SENSOR_SERVICE);
+        mBluetoothStatus = new BluetoothStatus(context);
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        super.finalize();
+
+        Log.d("Hardware", "finalize - unregisterListener(this)");
+        DeactivateSensors();
+    }
+
+    /**
+     * Engine 的BaseContext
+     */
+    protected Context mContext;
+
+    /**
+     * 蓝牙状态对象
+     */
+    BluetoothStatus mBluetoothStatus;
+
+    /**
      * 传感器管理对象.
      */
     protected SensorManager mSensorManager;
@@ -41,18 +69,6 @@ public class Hardware implements SensorEventListener {
 
     protected Sensor mAccelerometerSensor;
 
-    public Hardware(Context context) {
-        mSensorManager = (SensorManager)context.getSystemService(Context.SENSOR_SERVICE);
-
-    }
-
-    @Override
-    protected void finalize() throws Throwable {
-        super.finalize();
-
-        System.out.println("finalize - unregisterListener(this)");
-        mSensorManager.unregisterListener(this);
-    }
 
     /**
      * 设置传感器值改变事件的接收者.
@@ -70,22 +86,21 @@ public class Hardware implements SensorEventListener {
     }
 
     /**
-     * 激活指定的传感器
+     * 激活指定的传感器.
      * @param types 必需系Sensor.TYPE_XXXX 的数组, 有助提高代码可读性.
      */
     public void ActivateSensorsWithType(int[] types) {
         boolean result;
         Sensor sensor;
         for (int t : types) {
-            sensor = null;
             sensor = mSensorManager.getDefaultSensor(t);
             if (sensor == null) {
-                System.out.println("Sensors(Type:" + t + ") does not exist!");
+                Log.w("Hardware", "Sensors(Type:" + t + ") does not exist!");
                 continue;
             }
             result = mSensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_NORMAL);
             if (!result) {
-                System.out.println("Sensors(Type:" + t + ") Unable to register!");
+                Log.d("Hardware", "Sensors(Type:" + t + ") Unable to register!");
             }
         }
     }
@@ -118,7 +133,7 @@ public class Hardware implements SensorEventListener {
      */
     @Override
     public void onAccuracyChanged(Sensor sensor, int i) {
-        System.out.println(
+        Log.d("Hardware",
                 "onAccuracyChanged - sensor:" +
                 sensor.getType() +
                 sensor.getName() +
@@ -135,11 +150,11 @@ public class Hardware implements SensorEventListener {
      */
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
-        System.out.print(
-                "onSensorChanged - "
-                + sensorEvent.sensor.getType()
-                + sensorEvent.sensor.getName()
-        );
+//        System.out.print(
+//                "onSensorChanged - "
+//                + sensorEvent.sensor.getType()
+//                + sensorEvent.sensor.getName()
+//        );
         // 冇人接收事件就收工
         if (mSensorReceiver == null) {
             System.out.println("No receivers");
@@ -150,7 +165,7 @@ public class Hardware implements SensorEventListener {
         switch (sensorEvent.sensor.getType()) {
             // 1. 加速度
             case Sensor.TYPE_ACCELEROMETER:
-                System.out.println(
+                Log.v("Hardware",
                         String.format(
                                 "Accelerometer %f %f %f",
                                 sensorEvent.values[0],
