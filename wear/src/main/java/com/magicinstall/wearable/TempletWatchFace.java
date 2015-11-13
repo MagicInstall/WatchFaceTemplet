@@ -30,6 +30,7 @@ import android.os.Message;
 import android.support.wearable.watchface.CanvasWatchFaceService;
 import android.support.wearable.watchface.WatchFaceStyle;
 import android.text.format.Time;
+import android.util.Log;
 import android.view.SurfaceHolder;
 
 import java.lang.ref.WeakReference;
@@ -151,7 +152,7 @@ public class TempletWatchFace extends CanvasWatchFaceService {
         public void onTimeTick() {
             super.onTimeTick();
             /*+++++++++++++++++++ Wing ++++++++++++++++++++*/
-            System.out.println("onTimeTick");
+            Log.v("Engine" , "onTimeTick");
             mFaceDrawer.setTimeToNow(); // 更新时间
             /*---------------------------------------------*/
             invalidate();

@@ -6,7 +6,6 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.Typeface;
-import android.hardware.Sensor;
 import android.support.wearable.watchface.CanvasWatchFaceService;
 import android.text.Layout;
 import android.text.StaticLayout;
@@ -39,11 +38,6 @@ public class InformationsDrawer extends WatchFaceDrawer implements SensorsEventC
 
     public InformationsDrawer(CanvasWatchFaceService.Engine engine, Resources resources, Context context) {
         super(engine, resources, context);
-//        mDrawString = ("1234567890\n" +
-//                "ABCDEFGHIJKLMNOPQRSTUVWXYZ\n" +
-//                "abcdefghijklmnopqrstuvwxyz\n" +
-//                "~!@#$%^&*()_+-={}[]|;:'\"\\//,.<>");
-
         // 指定系统字体
 //        Typeface mFace = Typeface.create("Roboto", Typeface.NORMAL);
 
@@ -56,18 +50,8 @@ public class InformationsDrawer extends WatchFaceDrawer implements SensorsEventC
         mTextPaint.setTextSize(14);
         mTextPaint.setTypeface(mFace); // 指定字体
 
-        // 取得屏幕尺寸
-//        mDisplaySize = new Size(mDisplayMetrics.widthPixels, mDisplayMetrics.heightPixels);
-//        mDisplayMetrics = new DisplayMetrics();
-//        mDisplayMetrics = resources.getDisplayMetrics();
-
         // 使用StaticLayout 显示垂直居中嘅多行文本
         mTextLayout = new StaticLayout("", mTextPaint, mWidthPixels, Layout.Alignment.ALIGN_CENTER, 1.0f, 0.0f, false);
-
-        // 更新时间
-//        mCalendar = new GregorianCalendar();
-//        mdate = new Date();
-//        setDateToNow();
 
         // 设置时间格式
 //        mDateFormat = DateFormat.getDateTimeInstance(DateFormat.FULL, DateFormat.FULL, Locale.getDefault());
@@ -121,10 +105,10 @@ public class InformationsDrawer extends WatchFaceDrawer implements SensorsEventC
     protected void onInteractiveModeChanged(boolean inInteractiveMode) {
 //        super.onInteractiveModeChanged(inInteractiveMode);
         if (inInteractiveMode) {
-            mHardwear.ActivateSensorsWithType(new int[]{
-                            Sensor.TYPE_ACCELEROMETER
-                    }
-            );
+//            mHardwear.ActivateSensorsWithType(new int[]{
+//                            Sensor.TYPE_ACCELEROMETER
+//                    }
+//            );
         }
         else mHardwear.DeactivateSensors();
     }

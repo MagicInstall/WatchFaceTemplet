@@ -6,6 +6,7 @@ import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.support.wearable.watchface.CanvasWatchFaceService;
 import android.util.DisplayMetrics;
+import android.util.Log;
 
 import java.util.Calendar;
 import java.util.GregorianCalendar;
@@ -34,9 +35,8 @@ public abstract class WatchFaceDrawer {
     public boolean getIsVisible() {return mIsVisible;}
     public void setIsVisible(boolean visible) {
         if (visible != mIsVisible) {
-            System.out.println(
-                    "onVisibilityChanged:"
-                    + mIsVisible + "->" + visible
+            Log.v("Drawer",
+                    "onVisibilityChanged:" + mIsVisible + "->" + visible
             );
             mIsVisible = visible;
             onVisibilityChanged(visible);
@@ -63,9 +63,8 @@ public abstract class WatchFaceDrawer {
     public boolean getIsAmbient() {return mIsAmbient;}
     public void setIsAmbient(boolean isAmbient) {
         if (isAmbient != mIsAmbient) {
-            System.out.println(
-                    "onAmbientModeChanged:"
-                    + mIsAmbient + "->" + isAmbient
+            Log.v("Drawer",
+                    "onAmbientModeChanged:" + mIsAmbient + "->" + isAmbient
             );
             mIsAmbient = isAmbient;
             onAmbientModeChanged(isAmbient);
