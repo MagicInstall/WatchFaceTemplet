@@ -128,7 +128,7 @@ public abstract class WatchFaceDrawer {
     /**
      * 硬件操作对象
      */
-    protected Hardware mHardwear;
+    protected SensorMonitor mHardwear;
 
     private GregorianCalendar mCalendar;
 
@@ -143,7 +143,7 @@ public abstract class WatchFaceDrawer {
 
         mCallbakeReceiver = (WatchFaceCallback)engine;
         mContext = context;
-        mHardwear = new Hardware(context);
+        mHardwear = new SensorMonitor(context);
     }
 
 

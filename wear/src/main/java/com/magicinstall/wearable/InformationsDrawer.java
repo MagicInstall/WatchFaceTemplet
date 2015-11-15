@@ -35,6 +35,14 @@ public class InformationsDrawer extends WatchFaceDrawer implements SensorsEventC
 
     private String mSensorInfoString;
 
+    /**
+     * 蓝牙状态对象
+     */
+    BluetoothStatus mBluetoothStatus;
+    private String mPhoneConnect = "Phone: Disconnected ";
+    private String mPhoneBattery = "battery:---\n";
+
+
 
     public InformationsDrawer(CanvasWatchFaceService.Engine engine, Resources resources, Context context) {
         super(engine, resources, context);
@@ -48,6 +56,7 @@ public class InformationsDrawer extends WatchFaceDrawer implements SensorsEventC
         mTextPaint = new TextPaint();
         mTextPaint.setColor(Color.RED);
         mTextPaint.setTextSize(14);
+        mTextPaint.setAntiAlias(true); // 打开抗锯齿
         mTextPaint.setTypeface(mFace); // 指定字体
 
         // 使用StaticLayout 显示垂直居中嘅多行文本
@@ -60,6 +69,8 @@ public class InformationsDrawer extends WatchFaceDrawer implements SensorsEventC
         mSensorInfoString = mHardwear.toString();
         mHardwear.setSensorEventReceiver(this);
 //        mHardwear.ActivateAccelerometerSensor();
+
+        activateBluetooth(context);
     }
 
     /*
@@ -86,11 +97,13 @@ public class InformationsDrawer extends WatchFaceDrawer implements SensorsEventC
 
         mTextLayout = new StaticLayout(
 //                str_visible +
-                str_ambient +
-                mWidthPixels + "x" + mHeightPixels + str_FPS +
-                mSensorInfoString +
-                mDateString,
-                mTextPaint, mWidthPixels, Layout.Alignment.ALIGN_CENTER, 1.0f, 0.0f, false);
+                    str_ambient +
+                    mWidthPixels + "x" + mHeightPixels + str_FPS +
+                    mPhoneConnect + mPhoneBattery +
+                    mSensorInfoString +
+                    mDateString,
+                    mTextPaint, mWidthPixels, Layout.Alignment.ALIGN_CENTER, 1.0f, 0.0f, false
+        );
 
     }
 
@@ -106,11 +119,43 @@ public class InformationsDrawer extends WatchFaceDrawer implements SensorsEventC
 //        super.onInteractiveModeChanged(inInteractiveMode);
         if (inInteractiveMode) {
 //            mHardwear.ActivateSensorsWithType(new int[]{
-//                            Sensor.TYPE_ACCELEROMETER
+//                            SensorMonitor.TYPE_ACCELEROMETER
 //                    }
 //            );
         }
         else mHardwear.DeactivateSensors();
+    }
+
+    /**
+     * 激活BLE 连接取得电量
+     * @param context
+     */
+    protected void activateBluetooth(Context context) {
+        mBluetoothStatus = new BluetoothStatus(context) {
+            /**
+             * 手机端电量变化事件
+             * @param batteryLevel 手机端的电量, 单位是百分比(10 = 10%, 100 = 100%, ...)
+             */
+            @Override
+            public void onBatteryLevelChanged(int batteryLevel) {
+                super.onBatteryLevelChanged(batteryLevel);
+//                Log.i("SensorMonitor", "onBatteryLevelChanged:" + batteryLevel + "%");
+                mPhoneBattery = "battery:" + batteryLevel + "%\n";
+            }
+
+            /**
+             * 手机连接状态变化事件
+             *
+             * @param isConnnected true = 已连接
+             */
+            @Override
+            public void onConnectStatusChanged(boolean isConnnected) {
+                super.onConnectStatusChanged(isConnnected);
+
+                mPhoneConnect = "Phone: "+ (isConnnected ? "Connected " : "Disconnected ");
+                if (!isConnnected) mPhoneBattery = "battery:---\n";
+            }
+        };
     }
 
     /**
