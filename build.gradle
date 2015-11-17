@@ -21,3 +21,19 @@ allprojects {
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
+
+// 取得Git版本
+def gitReversion () {
+//    def cmd = "git rev-parse --short HEAD" // 使用 git checkout 的 6位短版本信息
+    def cmd = "git rev-list --all | wc -l" // 获取提交次
+    def proc = cmd.execute()
+    println("gitReversion:" + cmd.execute())
+    return proc.text.trim()
+}
+
+// 获取系统时间
+def buildTime() {
+    def df = new java.text.SimpleDateFormat("yyMMddHHmm")
+    df.setTimeZone(TimeZone.getDefault())
+    return df.format(new Date())
+}
