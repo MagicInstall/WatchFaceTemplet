@@ -44,10 +44,9 @@ public class SensorMonitor implements SensorEventListener {
 
     @Override
     protected void finalize() throws Throwable {
-        super.finalize();
-
         Log.d("SensorMonitor", "finalize - unregisterListener(this)");
         DeactivateSensors();
+        super.finalize();
     }
 
     /**
