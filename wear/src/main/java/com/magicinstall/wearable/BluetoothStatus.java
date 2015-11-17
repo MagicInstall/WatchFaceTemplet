@@ -71,6 +71,10 @@ public class BluetoothStatus {
     private BluetoothGatt mBluetoothGatt;
     private BluetoothGattDescriptor mBluetoothDescriptor;
 
+    /**
+     *
+     * @param context  传入Engine 的BaseContext.
+     */
     public BluetoothStatus(Context context) {
         mIsConnected = false;
         mGattIsSuccess = false;
