@@ -86,10 +86,10 @@ public abstract class WatchFaceDrawer {
      */
     protected void onAmbientModeChanged(boolean inAmbientMode) {}
 
-    // 响应交互模式间切换
+    // 响应交互模式切换
     private boolean mIsInteractive;
     /**
-     * 交互模式间切换事件.
+     * 交互模式切换事件.
      * @param inInteractiveMode
      */
     protected void onInteractiveModeChanged(boolean inInteractiveMode) {}
@@ -125,11 +125,6 @@ public abstract class WatchFaceDrawer {
      */
     protected DisplayMetrics mDisplayMetrics;
 
-    /**
-     * 硬件操作对象
-     */
-    protected SensorMonitor mHardwear;
-
     private GregorianCalendar mCalendar;
 
     public WatchFaceDrawer(CanvasWatchFaceService.Engine engine, Resources resources, Context context) {
@@ -143,7 +138,6 @@ public abstract class WatchFaceDrawer {
 
         mCallbakeReceiver = (WatchFaceCallback)engine;
         mContext = context;
-        mHardwear = new SensorMonitor(context);
     }
 
 

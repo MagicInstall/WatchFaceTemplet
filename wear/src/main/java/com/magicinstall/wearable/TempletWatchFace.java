@@ -120,6 +120,8 @@ public class TempletWatchFace extends CanvasWatchFaceService {
 
         }
 
+
+
         @Override
         public void onDestroy() {
             mUpdateTimeHandler.removeMessages(MSG_UPDATE_TIME);

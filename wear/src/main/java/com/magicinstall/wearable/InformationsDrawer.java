@@ -26,20 +26,14 @@ import java.util.Locale;
 public class InformationsDrawer extends WatchFaceDrawer{
     private String mSystemVersionString;
     private String mAppVersionString;
-//    private String mDrawString;
+
     private TextPaint mTextPaint;
     private StaticLayout mTextLayout;
 
-//    private GregorianCalendar mCalendar;
-//    private Date mdate;
     private String mDateString;
     private DateFormat mDateFormat;
 
-//    private float mFPS;
     private long  mPrevFrameMs;
-
-//    private Size mDisplaySize;
-
 
     /**
      * 蓝牙状态对象
@@ -48,14 +42,19 @@ public class InformationsDrawer extends WatchFaceDrawer{
     private String mPhoneConnect = "Phone: Disconnected ";
     private String mPhoneBattery = "bat.---\n";
 
-
     /**
      * 传感器对象
      */
     private SensorMonitor mSensorMonitor;
     private String mSensorInfoString;
-    private String mHeartString = "HeartRate:---";
-
+    private String mHeartString = "HeartRate:--- | ";
+    private String mStepCount = "Steps:---\n";
+    private String mAccelerometer = "  Accelerometer\n";
+    private String mLinearAcceleration = "L.Acceleration\n";
+    private String mMagneticField = "MagneticField\n";
+    private String mGyroscope = "Gyroscope\n";
+    private String mGravity = "Gravity\n";
+    private String mRotationVector = "RotationVector\n";
 
     public InformationsDrawer(CanvasWatchFaceService.Engine engine, Resources resources, Context context) {
         super(engine, resources, context);
@@ -154,8 +153,14 @@ public class InformationsDrawer extends WatchFaceDrawer{
                         +
                         mWidthPixels + "x" + mHeightPixels + str_FPS +
                         mPhoneConnect + mPhoneBattery +
-                        mHeartString +
+                        mHeartString + mStepCount +
                         mDateString +
+                        mAccelerometer +
+                        mLinearAcceleration +
+                        mMagneticField +
+                        mRotationVector +
+                        mGyroscope +
+                        mGravity +
                         "Ver. " + mAppVersionString
                 ,
                 mTextPaint, mWidthPixels, Layout.Alignment.ALIGN_CENTER, 1.0f, 0.0f, false
@@ -179,12 +184,18 @@ public class InformationsDrawer extends WatchFaceDrawer{
 //        super.onInteractiveModeChanged(inInteractiveMode);
         if (inInteractiveMode) {
             mSensorMonitor.ActivateSensorsWithType(new int[]{
-//                            Sensor.TYPE_ACCELEROMETER,
-                            Sensor.TYPE_HEART_RATE
+                            Sensor.TYPE_ACCELEROMETER,
+                            Sensor.TYPE_MAGNETIC_FIELD,
+                            Sensor.TYPE_GYROSCOPE,
+                            Sensor.TYPE_GRAVITY,
+                            Sensor.TYPE_LINEAR_ACCELERATION,
+                            Sensor.TYPE_ROTATION_VECTOR,
+                            Sensor.TYPE_STEP_COUNTER
+//                            Sensor.TYPE_HEART_RATE
                     }
             );
         }
-//        else mSensorMonitor.DeactivateSensors();
+        else mSensorMonitor.DeactivateSensors();
     }
 
     /**
@@ -200,7 +211,7 @@ public class InformationsDrawer extends WatchFaceDrawer{
             @Override
             public void onBatteryLevelChanged(int batteryLevel) {
                 super.onBatteryLevelChanged(batteryLevel);
-//                Log.i("SensorMonitor", "onBatteryLevelChanged:" + batteryLevel + "%");
+//                Log.i("SensorMoor", "onBatteryLevelChanged:" + batteryLevel + "%");
                 mPhoneBattery = "bat." + batteryLevel + "%\n";
             }
 
@@ -228,20 +239,94 @@ public class InformationsDrawer extends WatchFaceDrawer{
         return new SensorMonitor(context) {
             /**
              * 1. 加速度传感器值改变事件.
+             * 0.23mA低耗电
              */
             @Override
             public void onAccelerometerChanged(float x, float y, float z) {
                 super.onAccelerometerChanged(x, y, z);
+                mAccelerometer = String.format("  Accelerometer:%.2f %.2f %.2f\n",
+                        x, y, z
+                );
+            }
 
+            /**
+             * 2. 磁力传感器值改变事件.
+             * 6.8mA高耗电
+             */
+            @Override
+            public void onMagneticFieldChanged(float x, float y, float z) {
+                super.onMagneticFieldChanged(x, y, z);
+                mMagneticField = String.format("MagneticField:%.2f %.2f %.2f\n",
+                        x, y, z
+                );
+            }
+
+            /**
+             * 4. 陀螺仪传感器值改变事件.
+             * 6.1mA高耗电
+             */
+            @Override
+            public void onGyroscopeChanged(float x, float y, float z) {
+                super.onGyroscopeChanged(x, y, z);
+                mGyroscope = String.format("Gyroscope:%.2f %.2f %.2f\n",
+                        x, y, z
+                );
+            }
+
+            /**
+             * 9. 重力传感器值改变事件.
+             * 0.2mA低耗电
+             */
+            @Override
+            public void onGravityChanged(float x, float y, float z) {
+                super.onGravityChanged(x, y, z);
+                mGravity = String.format("Gravity:%.2f %.2f %.2f\n",
+                        x, y, z
+                );
+            }
+
+            /**
+             * 10. 线性加速度传感器值改变事件.
+             * 0.2mA低耗电
+             */
+            @Override
+            public void onLinearAccelerationChanged(float x, float y, float z) {
+                super.onLinearAccelerationChanged(x, y, z);
+                mLinearAcceleration = String.format("L.Acceleration:%.2f %.2f %.2f\n",
+                        x, y, z
+                );
+            }
+
+            /**
+             * 11. 旋转量传感器值改变事件.
+             * 6.1mA高耗电
+             */
+            @Override
+            public void onRotationVectorChanged(float x, float y, float z, float cosHalfOfTheta, float heading) {
+                super.onRotationVectorChanged(x, y, z, cosHalfOfTheta, heading);
+                mRotationVector = String.format("RotationVector:%.2f %.2f %.2f %.2f\n",
+                        x, y, z, cosHalfOfTheta
+                );
+            }
+
+            /**
+             * 19. 计步器值改变事件.
+             * 6.1mA高耗电?
+             */
+            @Override
+            public void onStepCounterChanged(int steps) {
+                super.onStepCounterChanged(steps);
+                mStepCount = "Steps:" + steps + "\n";
             }
 
             /**
              * 21. 心率传感器值改变事件.
+             * 1.0mA低耗电
              */
             @Override
             public void onHeartRateChanged(float rate) {
                 super.onHeartRateChanged(rate);
-                mHeartString = "HeartRate:" + rate + "/Minute\n";
+                mHeartString = "HeartRate:" + rate + "/Minute | ";
             }
         };
     }

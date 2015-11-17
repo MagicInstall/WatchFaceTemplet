@@ -214,7 +214,7 @@ public class SensorMonitor implements SensorEventListener {
                 onLightChanged(sensorEvent.values[0]);
                 break;
 
-            // 6. 压力(Ticwatch 冇讲有哩个传感器)
+            // 6. 压力(Ticwatch 一直返回0)
             case Sensor.TYPE_PRESSURE:
                 Log.v("SensorMonitor",
                         String.format("Pressure %f",
@@ -323,7 +323,7 @@ public class SensorMonitor implements SensorEventListener {
                 );
                 break;
 
-            // 18. 步行检测，每走一步就触发一次事件(Ticwatch 冇讲有哩个传感器)
+            // 18. 步行检测，每走一步就触发一次事件(Ticwatch 一直冇触发)
             case Sensor.TYPE_STEP_DETECTOR:
                 Log.v("SensorMonitor","StepDetector occurred");
                 onStepDetectorChanged();
@@ -331,8 +331,8 @@ public class SensorMonitor implements SensorEventListener {
 
             // 19. 步数记录
             case Sensor.TYPE_STEP_COUNTER:
-                Log.v("SensorMonitor", "StepCounter %f" + sensorEvent.values[0]);
-                onStepCounterChanged(sensorEvent.values[0]);
+                Log.v("SensorMonitor", "StepCounter " + sensorEvent.values[0]);
+                onStepCounterChanged((int)sensorEvent.values[0]);
                 break;
 
             // 21. 心率
@@ -368,23 +368,27 @@ public class SensorMonitor implements SensorEventListener {
      * 将手机向右倾斜，x轴为负值。
      * 将手机向上倾斜，y轴为负值。
      * 将手机向下倾斜，y轴为正值。
+     *
+     * maxRange:19.61
      */
     public void onAccelerometerChanged(float x, float y, float z){}
 
     /**
      * 2. 磁力传感器值改变事件.
+     * 6.8mA高耗电
      *
      * 返回x、y、z三轴的环境磁场数据。
      *
      * 硬件上一般没有独立的磁力传感器，磁力数据由电子罗盘传感器提供（E-compass）;
      * 电子罗盘传感器同时提供方向传感器数据。
      *
-     * 该数值的单位是微特斯拉（micro-Tesla），用uT表示
+     * maxRange:200, 该数值的单位是微特斯拉（micro-Tesla），用uT表示
      */
     public void onMagneticFieldChanged(float x, float y, float z){}
 
     /**
      * 4. 陀螺仪传感器值改变事件.
+     * 6.1mA高耗电
      *
      * 当手机逆时针旋转时，角速度为正值，顺时针旋转时，角速度为负值。
      * 陀螺仪传感器经常被用来计算手机已转动的角度.
@@ -399,6 +403,8 @@ public class SensorMonitor implements SensorEventListener {
      * 向右旋转，y轴为正。
      * 向上旋转，x轴为负。
      * 向下旋转，x轴为正。
+     *
+     * maxRange:40
      */
     public void onGyroscopeChanged(float x, float y, float z){}
 
@@ -427,10 +433,11 @@ public class SensorMonitor implements SensorEventListener {
 
     /**
      * 6. 压力传感器值改变事件.
-     * Ticwatch 冇讲有哩个传感器
+     * Ticwatch 一直返回0
      *
      * @param hPa 压力传感器返回当前的压强，单位是百帕斯卡hectopascal（hPa）
      */
+    @Deprecated
     public void onPressureChanged(float hPa){}
 
     /**
@@ -444,28 +451,32 @@ public class SensorMonitor implements SensorEventListener {
 
     /**
      * 9. 重力传感器值改变事件.
+     * 0.2mA低耗电
      *
      * 倾斜传感器?
      *
      * 对于加速度传感器, 当设备处于静止时，重力传感器的输出应该是相同的。
      *
-     * 单位是m/s^2
+     * maxRange:9.81, 单位是m/s^2
      */
     public void onGravityChanged(float x, float y, float z){}
 
     /**
      * 10. 线性加速度传感器值改变事件.
+     * 0.2mA低耗电
      *
      * 线性加速度传感器是加速度传感器减去重力影响获取的数据.
      * 加速度传感器、重力传感器和线性加速度传感器的计算公式如下：
      * 加速度 = 重力 + 线性加速度
      *
-     * 单位是m/s^2
+     * maxRange:19.61, 单位是m/s^2
      */
     public void onLinearAccelerationChanged(float x, float y, float z){}
 
     /**
      * 11. 旋转量传感器值改变事件.
+     * 6.1mA高耗电
+     *
      * Ticwatch 冇讲有哩个传感器
      *
      * 代表设备的方向，是一个将坐标轴和角度混合计算得到的数据
@@ -476,59 +487,64 @@ public class SensorMonitor implements SensorEventListener {
      * @param y
      * @param z
      * @param cosHalfOfTheta
-     * @param heading
+     * @param heading Ticwear 一直返回0
      */
     public void onRotationVectorChanged(float x, float y, float z
             , float cosHalfOfTheta, float heading){}
 
     /**
      * 14. 未校准磁力传感器值改变事件.
+     * 6.8mA高耗电
      * Ticwatch 冇讲有哩个传感器
      *
-     * 返回x、y、z三轴的环境磁场数据。
-     * 单位是微特斯拉（micro-Tesla），用uT表示
+     * 参考onMagneticFieldChanged 的注释.
      *
-     * onMagneticFieldChanged 的注释.
+     * 返回x、y、z三轴的环境磁场数据, maxRange:200,
+     * 单位是微特斯拉（micro-Tesla），用uT表示
      */
     public void onMagneticFieldUncalibratedChanged(float x, float y, float z){}
 
     /**
      * 16. 未校准陀螺仪传感器值改变事件.
+     * 6.1mA高耗电
      * Ticwatch 冇讲有哩个传感器
      *
-     * 返回x、y、z三轴的角加速度数据.
-     * 角加速度的单位是radians/second。
-     *
      * 参考onGyroscopeChanged 的注释.
+     *
+     * 返回x、y、z三轴的角加速度数据, maxRange:40,
+     * 角加速度的单位是radians/second。
      */
     public void onGyroscopeUncalibratedChanged(float x, float y, float z){}
 
     /**
      * 18. 步行检测传感器事件. 为咗视觉上嘅统一, 事件名加上Changed.
-     * Ticwatch 冇讲有哩个传感器
+     * Ticwatch 一直冇触发
      *
      * 每走一步就触发一次事件.
      */
+    @Deprecated
     public void onStepDetectorChanged() {}
 
     /**
      * 19. 计步器值改变事件.
-     * Ticwatch 冇讲有哩个传感器
+     * 6.1mA高耗电?
      *
-     * 需要走大概十几步，计步器确定当前喺走路状态, 先至会产生哩个事件.
+     * 需要走大概十几步，计步器确定当前喺走路状态, 先至会产生哩个事件(?)
      *
      * 想要得到当日嘅步数统计, 建议使用Ticwear SDK提供的接口,
      * 直接用哩个计步器需要自行处理业务逻辑.
      *
-     * @param steps 返回计步器从启动开始, 到事件发生嗰时录得嘅步数;
-     *              注销计步器会将步数清零.
+     * @param steps 返回从系统启动开始, 到事件发生嗰时录得嘅步数.
      */
-    public void onStepCounterChanged(float steps) {}
+    public void onStepCounterChanged(int steps) {}
 
     /**
      * 21. 心率传感器值改变事件.
      * 1.0mA低耗电
      * 刚开始测量时返回值可能为0，等到测量10秒左右就可以获得当前的心率值。
+     *
+     * 由于心率传感器取值时候比表盘锁屏时间长好多,
+     * 建议整个点击开关, 当需要心率取值嗰时令心率传感器长期运行.
      *
      * @param rate 每分钟的心跳数(beats/minute)
      */
