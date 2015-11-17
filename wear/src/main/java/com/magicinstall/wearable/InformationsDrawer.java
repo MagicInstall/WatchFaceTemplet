@@ -52,6 +52,7 @@ public class InformationsDrawer extends WatchFaceDrawer{
     private String mAccelerometer = "  Accelerometer\n";
     private String mLinearAcceleration = "L.Acceleration\n";
     private String mMagneticField = "MagneticField\n";
+    private String mOrientation = "Orientation\n";
     private String mGyroscope = "Gyroscope\n";
     private String mGravity = "Gravity\n";
     private String mRotationVector = "RotationVector\n";
@@ -121,7 +122,7 @@ public class InformationsDrawer extends WatchFaceDrawer{
     }
 
     /**
-     * 返回当前程序版本名
+     * 返回当前系统版本名
      */
     public static String getSystemVersionName() {
         return /*"Product Model: " +*/ android.os.Build.MODEL + ","
@@ -148,20 +149,25 @@ public class InformationsDrawer extends WatchFaceDrawer{
         mPrevFrameMs = System.currentTimeMillis();
 
         mTextLayout = new StaticLayout(
+                "\n" +
 //                str_visible +
                 str_ambient
                         +
                         mWidthPixels + "x" + mHeightPixels + str_FPS +
                         mPhoneConnect + mPhoneBattery +
-                        mHeartString + mStepCount +
                         mDateString +
+                        "\n" +
                         mAccelerometer +
                         mLinearAcceleration +
                         mMagneticField +
+                        mOrientation +
                         mRotationVector +
                         mGyroscope +
                         mGravity +
-                        "Ver. " + mAppVersionString
+                        mHeartString + mStepCount +
+                        "\nMagic Install\n" +
+                        mSystemVersionString +
+                        "\nVer. " + mAppVersionString
                 ,
                 mTextPaint, mWidthPixels, Layout.Alignment.ALIGN_CENTER, 1.0f, 0.0f, false
         );
@@ -258,6 +264,33 @@ public class InformationsDrawer extends WatchFaceDrawer{
                 super.onMagneticFieldChanged(x, y, z);
                 mMagneticField = String.format("MagneticField:%.2f %.2f %.2f\n",
                         x, y, z
+                );
+            }
+
+            /**
+             * 方向传感器(软件)角度变化事件.
+             * 0.23mA+6.8mA高耗电
+             * <p/>
+             * 哩个事件必须依赖加速度传感器同磁力传感器.
+             *
+             * @param azimuth 表示手机顶部朝向与正北方向的角度, 值的范围是360度.
+             *                该角度值为0时，表示手机顶部指向正北；
+             *                该角度为90度时，代表手机顶部指向正东；
+             *                该角度为180度时，代表手机顶部指向正南；
+             *                该角度为270度时，代表手机顶部指向正西.
+             * @param pitch   表示手机顶部或尾部翘起的角度, 值的范围是-180到180度.
+             *                假设将手机屏幕朝上水平放在桌子上，如果桌子是完全水平的，该角度应该是0;
+             *                假如从手机顶部抬起，直到将手机沿x轴旋转180度（屏幕向下水平放在桌面上），这个过程中，该角度值会从0变化到-180;
+             *                如果从手机底部开始抬起，直到将手机沿x轴旋转180度（屏幕向下水平放在桌面上），该角度的值会从0变化到180.
+             * @param roll    表示手机左侧或右侧翘起的角度, 值的范围是-180到180度.
+             *                将手机屏幕朝上水平放在桌子上，如果桌子是完全水平的，该角度应该是0;
+             *                假如将手机左侧逐渐抬起，直到将手机沿Y轴旋转90度（手机与桌面垂直），在这个旋转过程中，该角度会从0变化到-90;
+             */
+            @Override
+            public void onOrientationChanged(float azimuth, float pitch, float roll) {
+                super.onOrientationChanged(azimuth, pitch, roll);
+                mOrientation = String.format("Orientation:%.2f %.2f %.2f\n",
+                        azimuth, pitch, roll
                 );
             }
 

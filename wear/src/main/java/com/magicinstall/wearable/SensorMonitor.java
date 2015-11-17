@@ -69,13 +69,11 @@ public class SensorMonitor implements SensorEventListener {
     protected Sensor mAccelerometerSensor;
 
 
-//    /**
-//     * 设置传感器值改变事件的接收者.
-//     * @param receiver
-//     */
-//    public void setSensorEventReceiver(SensorsEventCallback receiver) {
-//        mSensorReceiver = receiver;
-//    }
+    // 计算方向
+    private float[] mAccelerometerValues = new float[3];
+    private boolean mAccelerometerChanged = false;
+    private float[] mMagneticFieldValues = new float[3];
+    private boolean mMagneticFieldChanged = false;
 
     /**
      * 停止监听所有传感器.
@@ -168,6 +166,17 @@ public class SensorMonitor implements SensorEventListener {
                         sensorEvent.values[1],
                         sensorEvent.values[2]
                 );
+                // 计算方向
+                if (mMagneticFieldChanged) {
+                    calculateOrientation(); // 交俾佢调用方向变化事件
+                    mMagneticFieldChanged = false;
+                    mAccelerometerChanged = false;
+                }
+                // 只更新加速度
+                else {
+                    mAccelerometerValues = sensorEvent.values;
+                    mAccelerometerChanged = true;
+                }
                 break;
 
             // 2. 磁力场
@@ -185,6 +194,17 @@ public class SensorMonitor implements SensorEventListener {
                         sensorEvent.values[1],
                         sensorEvent.values[2]
                 );
+                // 计算方向
+                if (mAccelerometerChanged) {
+                    calculateOrientation(); // 交俾佢调用方向变化事件
+                    mMagneticFieldChanged = false;
+                    mAccelerometerChanged = false;
+                }
+                // 只更新磁力场
+                else {
+                    mMagneticFieldValues = sensorEvent.values;
+                    mAccelerometerChanged = true;
+                }
                 break;
 
             // 4. 陀螺仪
@@ -359,6 +379,29 @@ public class SensorMonitor implements SensorEventListener {
     }
 
     /**
+     * 计算方向
+     */
+    private void calculateOrientation() {
+        float[] c_values = new float[3];
+        float[] r_matrix = new float[9];
+        SensorManager.getRotationMatrix(r_matrix, null, mAccelerometerValues, mMagneticFieldValues);
+        SensorManager.getOrientation(r_matrix, c_values);
+        Log.v("SensorMonitor",
+                String.format(
+                        "Orientation %f %f %f",
+                        (float) Math.toDegrees(c_values[0]),
+                        (float) Math.toDegrees(c_values[1]),
+                        (float) Math.toDegrees(c_values[2])
+                )
+        );
+        onOrientationChanged(
+                (float) Math.toDegrees(c_values[0]),
+                (float) Math.toDegrees(c_values[1]),
+                (float) Math.toDegrees(c_values[2])
+        );
+    }
+
+    /**
      * 1. 加速度传感器值改变事件.
      * 0.23mA低耗电
      *
@@ -385,6 +428,28 @@ public class SensorMonitor implements SensorEventListener {
      * maxRange:200, 该数值的单位是微特斯拉（micro-Tesla），用uT表示
      */
     public void onMagneticFieldChanged(float x, float y, float z){}
+
+    /**
+     * 方向传感器(软件)角度变化事件.
+     * 0.23mA+6.8mA高耗电
+     *
+     * 哩个事件必须依赖加速度传感器同磁力传感器.
+     *
+     * @param azimuth 表示手机顶部朝向与正北方向的角度, 值的范围是360度.
+     *                该角度值为0时，表示手机顶部指向正北；
+     *                该角度为90度时，代表手机顶部指向正东；
+     *                该角度为180度时，代表手机顶部指向正南；
+     *                该角度为270度时，代表手机顶部指向正西.
+     * @param pitch 表示手机顶部或尾部翘起的角度, 值的范围是-180到180度.
+     *              假设将手机屏幕朝上水平放在桌子上，如果桌子是完全水平的，该角度应该是0;
+     *              假如从手机顶部抬起，直到将手机沿x轴旋转180度（屏幕向下水平放在桌面上），这个过程中，该角度值会从0变化到-180;
+     *              如果从手机底部开始抬起，直到将手机沿x轴旋转180度（屏幕向下水平放在桌面上），该角度的值会从0变化到180.
+     * @param roll 表示手机左侧或右侧翘起的角度, 值的范围是-180到180度.
+     *             将手机屏幕朝上水平放在桌子上，如果桌子是完全水平的，该角度应该是0;
+     *             假如将手机左侧逐渐抬起，直到将手机沿Y轴旋转90度（手机与桌面垂直），在这个旋转过程中，该角度会从0变化到-90;
+     *             如果从手机的右侧开始抬起，直到将手机沿Y轴旋转90度（手机与桌面垂直），该角度的值会从0变化到90度.
+     */
+    public void onOrientationChanged(float azimuth, float pitch, float roll) {}
 
     /**
      * 4. 陀螺仪传感器值改变事件.
