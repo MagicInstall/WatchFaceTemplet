@@ -57,6 +57,11 @@ public class InformationsDrawer extends WatchFaceDrawer{
     private String mGravity = "Gravity\n";
     private String mRotationVector = "RotationVector\n";
 
+    /**
+     * 广播
+     */
+    private BroadcastReceiver mBroadcastReceiver;
+
     public InformationsDrawer(CanvasWatchFaceService.Engine engine, Resources resources, Context context) {
         super(engine, resources, context);
         // 指定系统字体
@@ -84,6 +89,22 @@ public class InformationsDrawer extends WatchFaceDrawer{
 //        Log.i("InfoDrawer", mSensorMonitor.toString());
 //        mSensorInfoString = mSensorMonitor.toString();
 //        mSensorMonitor.ActivateAccelerometerSensor();
+
+        // 打开广播接收
+        mBroadcastReceiver = new BroadcastReceiver(context);
+        mBroadcastReceiver.ActivateReceiverWithType(new String[]{
+                        BroadcastReceiver.ACTION_AIRPLANE_MODE_CHANGED,
+                        BroadcastReceiver.ACTION_BATTERY_CHANGED,
+//                            BroadcastReceiver.ACTION_BATTERY_LOW,
+//                            BroadcastReceiver.ACTION_BATTERY_OKAY,
+//                            BroadcastReceiver.ACTION_DATE_CHANGED,
+//                            BroadcastReceiver.ACTION_LOCALE_CHANGED,
+//                            BroadcastReceiver.ACTION_POWER_CONNECTED,
+//                            BroadcastReceiver.ACTION_POWER_DISCONNECTED,
+//                            BroadcastReceiver.ACTION_TIME_CHANGED,
+//                            BroadcastReceiver.ACTION_TIMEZONE_CHANGED
+                }
+        );
 
 
         // 蓝牙启动BLE 连接
@@ -165,9 +186,10 @@ public class InformationsDrawer extends WatchFaceDrawer{
                         mGyroscope +
                         mGravity +
                         mHeartString + mStepCount +
-                        "\nMagic Install\n" +
+                        "\n" +
                         mSystemVersionString +
-                        "\nVer. " + mAppVersionString
+                        "\nVer. " + mAppVersionString +
+                        "\nMagic Install"
                 ,
                 mTextPaint, mWidthPixels, Layout.Alignment.ALIGN_CENTER, 1.0f, 0.0f, false
         );
@@ -196,12 +218,15 @@ public class InformationsDrawer extends WatchFaceDrawer{
                             Sensor.TYPE_GRAVITY,
                             Sensor.TYPE_LINEAR_ACCELERATION,
                             Sensor.TYPE_ROTATION_VECTOR,
-                            Sensor.TYPE_STEP_COUNTER
+                            Sensor.TYPE_STEP_COUNTER,
 //                            Sensor.TYPE_HEART_RATE
                     }
             );
         }
-        else mSensorMonitor.DeactivateSensors();
+        else {
+            mSensorMonitor.DeactivateSensors();
+//            mBroadcastReceiver.DeactivateReceiver();
+        }
     }
 
     /**

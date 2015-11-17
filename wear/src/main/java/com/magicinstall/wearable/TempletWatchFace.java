@@ -254,6 +254,9 @@ public class TempletWatchFace extends CanvasWatchFaceService {
             updateTimer();
         }
 
+        /**
+         * 注册广播接收器
+         */
         private void registerReceiver() {
             if (mRegisteredTimeZoneReceiver) {
                 return;
@@ -263,6 +266,9 @@ public class TempletWatchFace extends CanvasWatchFaceService {
             TempletWatchFace.this.registerReceiver(mTimeZoneReceiver, filter);
         }
 
+        /**
+         * 注销广播接收器
+         */
         private void unregisterReceiver() {
             if (!mRegisteredTimeZoneReceiver) {
                 return;
