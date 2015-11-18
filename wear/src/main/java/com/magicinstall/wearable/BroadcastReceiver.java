@@ -9,6 +9,11 @@ import java.util.Set;
 
 /**
  * Created by wing on 15/11/17.
+ * 哩个类用嚟接收系统自带嘅一D 广播事件.
+ * 挑咗十个手表可能用得上嘅广播事件, 例如手表电量变化等,
+ * 具体有边D广播可以睇本类内置嘅静态常量(ACTION_XXXX)嘅注释.
+ *
+ * 用法十分简单, 只需要匿名继承哩个类, 重写onXXXChanged 方法就可以, 代码非常简洁.
  */
 public class BroadcastReceiver extends android.content.BroadcastReceiver {
     Context mContext;
@@ -62,19 +67,8 @@ public class BroadcastReceiver extends android.content.BroadcastReceiver {
      */
     public BroadcastReceiver(Context context) {
         super();
-
         mContext = context;
-//        mContext.registerReceiver(this, new IntentFilter(BroadcastReceiver.ACTION_BATTERY_CHANGED));
-//        mContext.registerReceiver(this, new IntentFilter(BroadcastReceiver.ACTION_BATTERY_LOW));
-//        mContext.registerReceiver(this, new IntentFilter(BroadcastReceiver.ACTION_BATTERY_OKAY));
-//        mContext.registerReceiver(this, new IntentFilter(BroadcastReceiver.ACTION_POWER_CONNECTED));
-//        mContext.registerReceiver(this, new IntentFilter(BroadcastReceiver.ACTION_POWER_DISCONNECTED));
-//        mContext.registerReceiver(this, new IntentFilter(BroadcastReceiver.ACTION_AIRPLANE_MODE_CHANGED));
-//        mContext.registerReceiver(this, new IntentFilter(BroadcastReceiver.ACTION_LOCALE_CHANGED));
-//        mContext.registerReceiver(this, new IntentFilter(BroadcastReceiver.ACTION_TIMEZONE_CHANGED));
-//        mContext.registerReceiver(this, new IntentFilter(BroadcastReceiver.ACTION_TIME_CHANGED));
-//        mContext.registerReceiver(this, new IntentFilter(BroadcastReceiver.ACTION_DATE_CHANGED));
-    }
+   }
 
     @Override
     protected void finalize() throws Throwable {
