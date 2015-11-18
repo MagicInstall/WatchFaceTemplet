@@ -9,6 +9,8 @@ import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.hardware.Sensor;
+import android.net.Uri;
+import android.os.BatteryManager;
 import android.os.Build;
 import android.support.wearable.watchface.CanvasWatchFaceService;
 import android.text.Layout;
@@ -48,7 +50,7 @@ public class InformationsDrawer extends WatchFaceDrawer{
     private SensorMonitor mSensorMonitor;
     private String mSensorInfoString;
     private String mHeartString = "HeartRate:--- | ";
-    private String mStepCount = "Steps:---\n";
+    private int mStepCount = 0;
     private String mAccelerometer = "  Accelerometer\n";
     private String mLinearAcceleration = "L.Acceleration\n";
     private String mMagneticField = "MagneticField\n";
@@ -61,6 +63,16 @@ public class InformationsDrawer extends WatchFaceDrawer{
      * 广播
      */
     private BroadcastReceiver mBroadcastReceiver;
+    private String mBatteryString = "Battery:--- --------\n";
+
+    /**
+     * 共享数据接收
+     */
+    private ContentObserver mContentObserver;
+    private int mContentSteps = 0;
+    private int mContentDistance = 0;
+    private String mWeather;
+//    private String mContentSteps = "Steps:---/---m(";
 
     public InformationsDrawer(CanvasWatchFaceService.Engine engine, Resources resources, Context context) {
         super(engine, resources, context);
@@ -73,7 +85,7 @@ public class InformationsDrawer extends WatchFaceDrawer{
         // 设置字体画笔
         mTextPaint = new TextPaint();
         mTextPaint.setColor(Color.RED);
-        mTextPaint.setTextSize(14);
+        mTextPaint.setTextSize(13);
         mTextPaint.setAntiAlias(true); // 打开抗锯齿
         mTextPaint.setTypeface(mFace); // 指定字体
 
@@ -90,22 +102,11 @@ public class InformationsDrawer extends WatchFaceDrawer{
 //        mSensorInfoString = mSensorMonitor.toString();
 //        mSensorMonitor.ActivateAccelerometerSensor();
 
-        // 打开广播接收
-        mBroadcastReceiver = new BroadcastReceiver(context);
-        mBroadcastReceiver.ActivateReceiverWithType(new String[]{
-                        BroadcastReceiver.ACTION_AIRPLANE_MODE_CHANGED,
-                        BroadcastReceiver.ACTION_BATTERY_CHANGED,
-//                            BroadcastReceiver.ACTION_BATTERY_LOW,
-//                            BroadcastReceiver.ACTION_BATTERY_OKAY,
-//                            BroadcastReceiver.ACTION_DATE_CHANGED,
-//                            BroadcastReceiver.ACTION_LOCALE_CHANGED,
-//                            BroadcastReceiver.ACTION_POWER_CONNECTED,
-//                            BroadcastReceiver.ACTION_POWER_DISCONNECTED,
-//                            BroadcastReceiver.ACTION_TIME_CHANGED,
-//                            BroadcastReceiver.ACTION_TIMEZONE_CHANGED
-                }
-        );
+        // 启动共享数据接收
+        activateContentObserver(context);
 
+        // 启动广播接收
+        activateBroadcast(context);
 
         // 蓝牙启动BLE 连接
         activateBluetooth(context);
@@ -170,13 +171,14 @@ public class InformationsDrawer extends WatchFaceDrawer{
         mPrevFrameMs = System.currentTimeMillis();
 
         mTextLayout = new StaticLayout(
-                "\n" +
 //                str_visible +
                 str_ambient
                         +
                         mWidthPixels + "x" + mHeightPixels + str_FPS +
+                        mBatteryString +
                         mPhoneConnect + mPhoneBattery +
                         mDateString +
+                        /*定位加哩度*/ mWeather +
                         "\n" +
                         mAccelerometer +
                         mLinearAcceleration +
@@ -185,11 +187,11 @@ public class InformationsDrawer extends WatchFaceDrawer{
                         mRotationVector +
                         mGyroscope +
                         mGravity +
-                        mHeartString + mStepCount +
+                        mHeartString + "Steps:" + mContentSteps + "(" + mStepCount + ")/" + mContentDistance + "m\n" +
                         "\n" +
                         mSystemVersionString +
                         "\nVer. " + mAppVersionString +
-                        "\nMagic Install"
+                        "\nMagic Install\n---- ----"
                 ,
                 mTextPaint, mWidthPixels, Layout.Alignment.ALIGN_CENTER, 1.0f, 0.0f, false
         );
@@ -259,6 +261,101 @@ public class InformationsDrawer extends WatchFaceDrawer{
                 if (!isConnnected) mPhoneBattery = "bat.---\n";
             }
         };
+    }
+
+    /**
+     * 启动共享数据接收
+     * @param context
+     */
+    private void activateContentObserver(Context context) {
+        mContentObserver = new ContentObserver(context) {
+            /**
+             * 步行数据变化事件
+             *
+             * @param steps    当日的步数.
+             * @param distance 当日嘅步行距离, 单位是米.
+             */
+            @Override
+            public void onStepChanged(int steps, int distance) {
+                super.onStepChanged(steps, distance);
+                mContentSteps = steps;
+                mContentDistance = distance;
+            }
+
+            /**
+             * 天气数据变化事件
+             *
+             * @param weather
+             */
+            @Override
+            public void onWeatherChanged(WeatherInfo weather) {
+                super.onWeatherChanged(weather);
+                mWeather = String.format("%s %.0f°(%.0f°~%.0f°) PM2.5:%.0f\n",
+                        weather.Stutas, weather.Temperature, weather.MaxTemperature, weather.MinTemperature, weather.PM25
+                );
+            }
+        };
+        mContentObserver.ActivateObserverWithType(new Uri[] {
+                ContentObserver.CONTENT_STEP_URI,
+                ContentObserver.WEATHER_URI
+        });
+    }
+
+    /**
+     * 启动广播接收
+     * @param context
+     */
+    private void activateBroadcast(Context context) {
+        mBroadcastReceiver = new BroadcastReceiver(context) {
+            /**
+             * 电量变化事件
+             * </br>
+             * 由于电压变化同样会触发哩个事件, 所以多次事件之间的电量值可能会一样.
+             *
+             * @param level   电量, 单位是百分比(10 = 10%, 100 = 100%, ...);
+             * @param status  充电状态:
+             *                BatteryManager.BATTERY_STATUS_UNKNOWN = 1;
+             *                BatteryManager.BATTERY_STATUS_CHARGING = 2;
+             *                BatteryManager.BATTERY_STATUS_DISCHARGING = 3;
+             *                BatteryManager.BATTERY_STATUS_NOT_CHARGING = 4;
+             *                BatteryManager.BATTERY_STATUS_FULL = 5;
+             * @param plugged true = 连接上充电器
+             */
+            @Override
+            public void onBatteryChanged(int level, int status, boolean plugged) {
+                super.onBatteryChanged(level, status, plugged);
+                switch(status) {
+                    case BatteryManager.BATTERY_STATUS_CHARGING:
+                        mBatteryString = "Battery:" + level + "% Charging\n";
+                        break;
+                    case BatteryManager.BATTERY_STATUS_DISCHARGING:
+                        mBatteryString = "Battery:" + level + "% Discharging\n";
+                        break;
+                    case BatteryManager.BATTERY_STATUS_NOT_CHARGING:
+                        mBatteryString = "Battery:" + level + "% Not charging\n";
+                        break;
+                    case BatteryManager.BATTERY_STATUS_FULL:
+                        mBatteryString = "Battery:" + level + "% Full\n";
+                        break;
+                    default:
+                        mBatteryString = "Battery:" + level + "% Unknow\n";
+                        break;
+                }
+            }
+        };
+        mBroadcastReceiver.ActivateReceiverWithType(new String[]{
+                        BroadcastReceiver.ACTION_AIRPLANE_MODE_CHANGED,
+                        BroadcastReceiver.ACTION_BATTERY_CHANGED,
+                        BroadcastReceiver.ACTION_BATTERY_LOW,
+                        BroadcastReceiver.ACTION_BATTERY_OKAY,
+                        BroadcastReceiver.ACTION_DATE_CHANGED,
+                        BroadcastReceiver.ACTION_LOCALE_CHANGED,
+                        BroadcastReceiver.ACTION_POWER_CONNECTED,
+                        BroadcastReceiver.ACTION_POWER_DISCONNECTED,
+                        BroadcastReceiver.ACTION_TIME_CHANGED,
+                        BroadcastReceiver.ACTION_TIMEZONE_CHANGED
+                }
+        );
     }
 
     /**
@@ -374,7 +471,7 @@ public class InformationsDrawer extends WatchFaceDrawer{
             @Override
             public void onStepCounterChanged(int steps) {
                 super.onStepCounterChanged(steps);
-                mStepCount = "Steps:" + steps + "\n";
+                mStepCount = steps;
             }
 
             /**
