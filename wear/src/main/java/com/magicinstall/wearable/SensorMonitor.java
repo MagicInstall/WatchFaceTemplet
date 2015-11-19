@@ -9,23 +9,6 @@ import android.util.Log;
 
 import java.util.List;
 
-///**
-// * 为咗增强代码可读性, 将传感器事件单独拆开, 用接口实现.
-// */
-//interface SensorsEventCallback {
-//    /**
-//     * 加速度传感器值改变事件.
-//     *
-//     * 将手机平放在桌面上，x轴默认为0，y轴默认0，z轴默认9.81。
-//     * 将手机朝下放在桌面上，z轴为-9.81。
-//     * 将手机向左倾斜，x轴为正值。
-//     * 将手机向右倾斜，x轴为负值。
-//     * 将手机向上倾斜，y轴为负值。
-//     * 将手机向下倾斜，y轴为正值。
-//     */
-//    public void onAccelerometerChanged(float x, float y, float z);
-//}
-
 /**
  * Created by wing on 15/11/10.
  * 用法很简单, 只需要用匿名继承哩个类, 重写onXXXChanged 方法就可以, 代码非常简洁;
@@ -58,11 +41,6 @@ public class SensorMonitor implements SensorEventListener {
      * 传感器管理对象.
      */
     protected SensorManager mSensorManager;
-
-//    /**
-//     * 传感器值改变事件的接收者.
-//     */
-//    protected SensorsEventCallback mSensorReceiver;
 
     // 测试用
     protected Sensor mAccelerometerSensor;
@@ -100,27 +78,6 @@ public class SensorMonitor implements SensorEventListener {
             }
         }
     }
-
-    /**
-     * 激活加速度传感器(测试用)
-     */
-    @Deprecated
-    public boolean ActivateAccelerometerSensor() {
-        if (mAccelerometerSensor == null) {
-            mAccelerometerSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        }
-
-        return mSensorManager.registerListener(this, mAccelerometerSensor, SensorManager.SENSOR_DELAY_NORMAL);
-    }
-
-    /**
-     * 注销加速度传感器(测试用)
-     */
-    @Deprecated
-    public void DeactivateAccelerometerSensor() {
-        mSensorManager.unregisterListener(this, mAccelerometerSensor);
-    }
-
 
     /**
      * 传感器精度改变事件.
