@@ -9,7 +9,6 @@ import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.hardware.Sensor;
-import android.net.Uri;
 import android.os.BatteryManager;
 import android.os.Build;
 import android.support.wearable.watchface.CanvasWatchFaceService;
@@ -68,11 +67,18 @@ public class InformationsDrawer extends WatchFaceDrawer{
     /**
      * 共享数据接收
      */
-    private ContentObserver mContentObserver;
+    private StepsObserver mStepsObserver;
     private int mContentSteps = 0;
     private int mContentDistance = 0;
+    private WeatherObserver mWeatherObserver;
     private String mWeather;
+    private String mLocation = "\n";
 //    private String mContentSteps = "Steps:---/---m(";
+
+    /**
+     * 定位服务
+     */
+//    private LocationService mLocationService;
 
     public InformationsDrawer(CanvasWatchFaceService.Engine engine, Resources resources, Context context) {
         super(engine, resources, context);
@@ -94,7 +100,7 @@ public class InformationsDrawer extends WatchFaceDrawer{
 
         // 设置时间格式
 //        mDateFormat = DateFormat.getDateTimeInstance(DateFormat.FULL, DateFormat.FULL, Locale.getDefault());
-        mDateFormat = new SimpleDateFormat("yyyy/MMMM/d EEEE\nH:m:s z", Locale.getDefault());
+        mDateFormat = new SimpleDateFormat("yyyy/MMMM/d EEEEH:m:s\nz", Locale.getDefault());
 
         // 激活传感器
         mSensorMonitor = newSensorsMonitor(context);
@@ -110,6 +116,10 @@ public class InformationsDrawer extends WatchFaceDrawer{
 
         // 蓝牙启动BLE 连接
         activateBluetooth(context);
+
+        // 启动定位服务
+//        mLocationService = new LocationService(context);
+
 
         mAppVersionString = getAppVersionName(context);
         mSystemVersionString = getSystemVersionName();
@@ -177,8 +187,8 @@ public class InformationsDrawer extends WatchFaceDrawer{
                         mWidthPixels + "x" + mHeightPixels + str_FPS +
                         mBatteryString +
                         mPhoneConnect + mPhoneBattery +
-                        mDateString +
-                        /*定位加哩度*/ mWeather +
+                        mDateString + mLocation +
+                        mWeather +
                         "\n" +
                         mAccelerometer +
                         mLinearAcceleration +
@@ -200,7 +210,7 @@ public class InformationsDrawer extends WatchFaceDrawer{
 
     @Override
     public void Draw(Canvas canvas, Rect bounds) {
-        mDateString = mDateFormat.format(System.currentTimeMillis()) + "\n";
+        mDateString = mDateFormat.format(System.currentTimeMillis());
         rebuildTextLayout();
         mTextLayout.draw(canvas);
     }
@@ -268,7 +278,7 @@ public class InformationsDrawer extends WatchFaceDrawer{
      * @param context
      */
     private void activateContentObserver(Context context) {
-        mContentObserver = new ContentObserver(context) {
+        mStepsObserver = new StepsObserver(context) {
             /**
              * 步行数据变化事件
              *
@@ -281,7 +291,10 @@ public class InformationsDrawer extends WatchFaceDrawer{
                 mContentSteps = steps;
                 mContentDistance = distance;
             }
+        };
+        mStepsObserver.ActivateObserver();
 
+        mWeatherObserver = new WeatherObserver(context){
             /**
              * 天气数据变化事件
              *
@@ -291,14 +304,12 @@ public class InformationsDrawer extends WatchFaceDrawer{
             public void onWeatherChanged(WeatherInfo weather) {
                 super.onWeatherChanged(weather);
                 mWeather = String.format("%s %.0f°(%.0f°~%.0f°) PM2.5:%.0f\n",
-                        weather.Stutas, weather.Temperature, weather.MaxTemperature, weather.MinTemperature, weather.PM25
+                        weather.StringStutas, weather.Temperature, weather.MaxTemperature, weather.MinTemperature, weather.PM25
                 );
+                mLocation = " " + weather.Location + "\n";
             }
         };
-        mContentObserver.ActivateObserverWithType(new Uri[] {
-                ContentObserver.CONTENT_STEP_URI,
-                ContentObserver.WEATHER_URI
-        });
+        mWeatherObserver.ActivateObserver();
     }
 
     /**
@@ -472,6 +483,9 @@ public class InformationsDrawer extends WatchFaceDrawer{
             public void onStepCounterChanged(int steps) {
                 super.onStepCounterChanged(steps);
                 mStepCount = steps;
+
+
+//                mLocationService.getLocation();
             }
 
             /**
