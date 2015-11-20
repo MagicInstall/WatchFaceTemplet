@@ -10,7 +10,7 @@ android {
         minSdkVersion 22
         targetSdkVersion 23
         versionCode 1
-        versionName "0.4." /*+ gitReversion() + "."*/ + buildTime()
+        versionName "0.5." /*+ gitReversion() + "."*/ + buildTime()
     }
     buildTypes {
         release {
