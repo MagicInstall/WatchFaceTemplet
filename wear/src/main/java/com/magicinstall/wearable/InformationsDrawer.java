@@ -364,13 +364,13 @@ public class InformationsDrawer extends WatchFaceDrawer{
             public void onAirplaneMode(boolean state) {
                 super.onAirplaneMode(state);
                 if (state == true) {
-                    Log.d("Infomation", "mBluetoothStatus.DisconnectGATT()");
+                    // 关闭连接
                     mBluetoothStatus.DisconnectGATT();
 
                     mPhoneConnect = "Phone: "+ (mBluetoothStatus.getIsConnected() ? "Connected " : "Disconnected ");
                     if (!mBluetoothStatus.getIsConnected()) mPhoneBattery = "bat.---\n";
                 } else {
-                    Log.d("Infomation", "mBluetoothStatus.ConnectGATT()");
+                    // 重连手机
                     mBluetoothStatus.ConnectGATT();
                 }
             }

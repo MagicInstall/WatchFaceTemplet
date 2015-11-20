@@ -27,11 +27,8 @@ import java.util.UUID;
  * 1. 如果手表未配对手机, 可能要喺配对之后重启一下手表!(主要系要重启表盘的进程);
  * 2. 由于切换至飞机模式会立即断开GATT 设备嘅连接,
  *    而且唔会自动重连, 仲要系冇任何事件提示,
- *    最扑街嘅地方系取消飞机模式后唔可以即刻新建一个连接,
- *    因为蓝牙适配器启动需要时间!
- *    唯有系喺取消飞机模式后(用广播事件得到哩个通知), 整个定时器之类嘅,
- *    隔一段时间查一次getBluetoothAdapterIsEnabled 状态,
- *    再去重新连接.
+ *    最好配合飞机模式广播使用,
+ *    喺飞机模式关闭嘅事件入边重新连接.
  *
  * 用法很简单, 只需要用匿名继承哩个类, 重写onXXXChanged 方法就可以, 代码非常简洁.
  */
@@ -171,6 +168,7 @@ public class BluetoothStatus {
         }
     }
 
+    // 定时器
     private Handler mWaitHandler;
     private Runnable mWaitRunnable;
     /**
@@ -381,6 +379,8 @@ public class BluetoothStatus {
     /**
      * 手机连接状态变化事件
      * 注意: 如果切换至飞机模式, GATT 连接会立即断开, 而且冇任何事件提示!
+     *      最好配合飞机模式广播使用,
+     *      喺飞机模式关闭嘅事件入边重新连接.
      * @param isConnnected true = 已连接
      */
     public void onConnectStatusChanged(boolean isConnnected) {}
