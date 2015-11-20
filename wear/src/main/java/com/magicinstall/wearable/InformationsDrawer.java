@@ -271,6 +271,7 @@ public class InformationsDrawer extends WatchFaceDrawer{
                 if (!isConnnected) mPhoneBattery = "bat.---\n";
             }
         };
+        mBluetoothStatus.ConnectGATT();
     }
 
     /**
@@ -351,6 +352,26 @@ public class InformationsDrawer extends WatchFaceDrawer{
                     default:
                         mBatteryString = "Battery:" + level + "% Unknow\n";
                         break;
+                }
+            }
+
+            /**
+             * 收到飞鸡模式切换广播事件
+             *
+             * @param state true = 已切换到飞鸡模式
+             */
+            @Override
+            public void onAirplaneMode(boolean state) {
+                super.onAirplaneMode(state);
+                if (state == true) {
+                    Log.d("Infomation", "mBluetoothStatus.DisconnectGATT()");
+                    mBluetoothStatus.DisconnectGATT();
+
+                    mPhoneConnect = "Phone: "+ (mBluetoothStatus.getIsConnected() ? "Connected " : "Disconnected ");
+                    if (!mBluetoothStatus.getIsConnected()) mPhoneBattery = "bat.---\n";
+                } else {
+                    Log.d("Infomation", "mBluetoothStatus.ConnectGATT()");
+                    mBluetoothStatus.ConnectGATT();
                 }
             }
         };
