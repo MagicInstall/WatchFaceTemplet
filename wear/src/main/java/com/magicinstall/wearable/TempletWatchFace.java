@@ -31,6 +31,7 @@ import android.support.wearable.watchface.CanvasWatchFaceService;
 import android.support.wearable.watchface.WatchFaceStyle;
 import android.text.format.Time;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 
 import java.lang.ref.WeakReference;
@@ -86,6 +87,31 @@ public class TempletWatchFace extends CanvasWatchFaceService {
         boolean mRegisteredTimeZoneReceiver = false;
 
         /**
+         * TODO 挠挠的关键代码
+         * Called as the user performs touch-screen interaction with the
+         * window that is currently showing this wallpaper.  Note that the
+         * events you receive here are driven by the actual application the
+         * user is interacting with, so if it is slow you will get fewer
+         * move events.
+         *
+         * @param event
+         */
+        @Override
+        public void onTouchEvent(MotionEvent event) {
+            super.onTouchEvent(event);
+            Log.d("Engine" , String.format(
+                    "onTouchEvent DeviceId:%d Action:%d x:%f,y:%f Pressure:%f Edge:%d Meta:%d ",
+                    event.getDeviceId(),
+                    event.getAction(),
+                    event.getX(),
+                    event.getY(),
+                    event.getPressure(),
+                    event.getEdgeFlags(),
+                    event.getMetaState()
+            ));
+        }
+
+        /**
          * Whether the display supports fewer bits for each color in ambient mode. When true, we
          * disable anti-aliasing in ambient mode.
          */
@@ -99,6 +125,11 @@ public class TempletWatchFace extends CanvasWatchFaceService {
                     .setCardPeekMode(WatchFaceStyle.PEEK_MODE_SHORT)
                     .setBackgroundVisibility(WatchFaceStyle.BACKGROUND_VISIBILITY_INTERRUPTIVE)
                     .setShowSystemUiTime(false)
+                    /*+++++++++++++++++++ Wing ++++++++++++++++++++*/
+                    // 唔使用Engine 嘅obTapCommand 事件嘅话唔需要打开哩个设置
+                    // Serveic 的onTouchEvent 事件系一直会触发嘅
+//                    .setAcceptsTapEvents(true)
+                    /*---------------------------------------------*/
                     .build());
 
             Resources resources = TempletWatchFace.this.getResources();
