@@ -23,37 +23,37 @@ public class BroadcastReceiver extends android.content.BroadcastReceiver {
      */
     public static final String ACTION_BATTERY_CHANGED = Intent.ACTION_BATTERY_CHANGED;
     /**
-     *  低电量*
+     *  低电量
      */
     public static final String ACTION_BATTERY_LOW = Intent.ACTION_BATTERY_LOW;
     /**
-     * 从低电量回血至正常电量*
+     * 从低电量回血至正常电量
      */
     public static final String ACTION_BATTERY_OKAY = Intent.ACTION_BATTERY_OKAY;
     /**
-     * 插入充电器*
+     * 插入充电器
      */
     public static final String ACTION_POWER_CONNECTED = Intent.ACTION_POWER_CONNECTED;
     /**
-     * 掹出充电器*
+     * 掹出充电器
      */
     public static final String ACTION_POWER_DISCONNECTED = Intent.ACTION_POWER_DISCONNECTED;
 
     /**
-     * 飞鸡模式*
+     * 飞鸡模式
      */
     public static final String ACTION_AIRPLANE_MODE_CHANGED = Intent.ACTION_AIRPLANE_MODE_CHANGED;
 
     /**
-     * 位置*
+     * 位置
      */
     public static final String ACTION_LOCALE_CHANGED = Intent.ACTION_LOCALE_CHANGED;
     /**
-     * 时区*
+     * 时区
      */
     public static final String ACTION_TIMEZONE_CHANGED = Intent.ACTION_TIMEZONE_CHANGED;
     /**
-     * 时间设置*
+     * 时间设置
      */
     public static final String ACTION_TIME_CHANGED = Intent.ACTION_TIME_CHANGED;
 
@@ -90,20 +90,9 @@ public class BroadcastReceiver extends android.content.BroadcastReceiver {
      * @param actions 最好系写成BroadcastReceiver.ACTION_XXXX 的数组, 有助提高代码可读性.
      */
     public void ActivateReceiverWithType(String[] actions) {
-//        Intent result;
-//        IntentFilter filter;
         for (String a : actions) {
-//            filter = new IntentFilter(a);
-////            if (filter == null) {
-////                Log.e("Broadcast", a + " filter is null!");
-////                continue;
-////            }
-////        for (IntentFilter f:actions) {
-//
-            /*result = */mContext.registerReceiver(this, new IntentFilter(a)); // 唔知点解唔可以读返回值, 一读就收唔到广播
-//            if (result == null) {
-//                Log.e("Broadcast", a + " Unable to register!");
-//            }
+            // 唔知点解唔可以读返回值, 一读就收唔到广播
+            mContext.registerReceiver(this, new IntentFilter(a));
         }
     }
 
@@ -118,14 +107,52 @@ public class BroadcastReceiver extends android.content.BroadcastReceiver {
             case "android.intent.action.BATTERY_CHANGED":
                 Log.v("Broadcast", "Battery level:" + intent.getExtras().getInt("level") + "%");
                 onBatteryChanged(
-                        intent.getExtras().getInt("level"), // 实际上要求出与"scale"的比值, 但实测Ticwear 的scale 是100, 就费事整喇...
-                        intent.getExtras().getInt("status"),
-                        intent.getExtras().getInt("plugged") > 0 ? true : false
+                        intent.getIntExtra("level", 0), // 实际上要求出与"scale"的比值, 但实测Ticwear 的scale 是100, 就费事整喇...
+                        intent.getIntExtra("status", 1),
+                        intent.getIntExtra("plugged", 0) > 0 ? true : false
                 );
                 break;
 
             case "android.intent.action.BATTERY_LOW":
+                Log.v("Broadcast", "Battery low");
+                onBatteryLow();
                 break;
+
+            case "android.intent.action.BATTERY_OKAY" :
+                Log.v("Broadcast", "Battery Okay");
+                onBatteryOkay();
+                break;
+
+            case "android.intent.action.ACTION_POWER_CONNECTED":
+                Log.v("Broadcast", "Power connected");
+                onPowerConnected();
+                break;
+
+            case "android.intent.action.ACTION_POWER_DISCONNECTED":
+                Log.v("Broadcast", "Power disconnected");
+                onPowerDisconnected();
+                break;
+
+            case "android.intent.action.AIRPLANE_MODE":
+                Log.v("Broadcast", "Airplane mode:" + intent.getExtras().getBoolean("state"));
+                onAirplaneMode(intent.getBooleanExtra("state", true));
+                break;
+
+//            case "android.intent.action.LOCALE_CHANGED":
+//                onLocationChanged();
+//                break;
+
+//            case "android.intent.action.TIMEZONE_CHANGED":
+//                onTimezoneChanged();
+//                break;
+
+//            case "android.intent.action.TIME_SET":
+//                onTimeSet();
+//                break;
+
+//            case "android.intent.action.DATE_CHANGED":
+//                onDateChanged();
+//                break;
 
             default:
                 String debug_print = intent.getAction() + " ";
@@ -144,7 +171,7 @@ public class BroadcastReceiver extends android.content.BroadcastReceiver {
     }
 
     /**
-     * 电量变化事件
+     * 收到电量变化广播事件
      * </br>
      * 由于电压变化同样会触发哩个事件, 所以多次事件之间的电量值可能会一样.
      *
@@ -158,4 +185,56 @@ public class BroadcastReceiver extends android.content.BroadcastReceiver {
      * @param plugged true = 连接上充电器
      */
     public void onBatteryChanged(int level, int status, boolean plugged) {}
+
+    /**
+     * 收到低电量广播事件
+     */
+    public void onBatteryLow() {}
+
+    /**
+     * 收到从低电量回血至正常电量广播事件
+     */
+    public void onBatteryOkay() {}
+
+    /**
+     * 收到插入充电器广播事件
+     */
+    public void onPowerConnected() {}
+
+    /**
+     * 收到掹出充电器广播事件
+     */
+    public void onPowerDisconnected() {}
+
+    /**
+     * 收到飞鸡模式切换广播事件
+     * @param state true = 已切换到飞鸡模式
+     */
+    public void onAirplaneMode(boolean state) {
+        Log.d("Broadcast", "Airplane mode:" + state);
+    }
+
+    /**
+     * 收到位置变化广播事件
+     * 未完成
+     */
+    public void onLocationChanged(){}
+
+    /**
+     * 收到时区变化广播事件
+     * 未完成
+     */
+    public void onTimezoneChanged(){}
+
+    /**
+     * 收到时间设置广播事件
+     * 未完成
+     */
+    public void onTimeSet(){}
+
+    /**
+     * 收到日期变化广播事件
+     * 未完成
+     */
+    public void onDateChanged(){}
 }
