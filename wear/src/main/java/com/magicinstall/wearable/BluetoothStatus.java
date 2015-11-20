@@ -9,6 +9,7 @@ import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothProfile;
 import android.content.Context;
+import android.os.Handler;
 import android.util.Log;
 
 import java.util.Set;
@@ -24,11 +25,25 @@ import java.util.UUID;
  *
  * 注意:
  * 1. 如果手表未配对手机, 可能要喺配对之后重启一下手表!(主要系要重启表盘的进程);
- * 2. 哩个类喺为表盘服务而设计, 一但分配实例, 就立即启动,
+ * 2. 由于切换至飞机模式会立即断开GATT 设备嘅连接,
+ *    而且唔会自动重连, 仲要系冇任何事件提示,
+ *    最扑街嘅地方系取消飞机模式后唔可以即刻新建一个连接,
+ *    因为蓝牙适配器启动需要时间!
+ *    唯有系喺取消飞机模式后(用广播事件得到哩个通知), 整个定时器之类嘅,
+ *    隔一段时间查一次getBluetoothAdapterIsEnabled 状态,
+ *    再去重新连接.
  *
  * 用法很简单, 只需要用匿名继承哩个类, 重写onXXXChanged 方法就可以, 代码非常简洁.
  */
 public class BluetoothStatus {
+    /**
+     * 查询蓝牙适配器有冇开启.
+     * @return true = 已启动
+     */
+    public boolean getBluetoothAdapterIsEnabled() {
+        return mAdapter != null && mAdapter.isEnabled();
+    }
+
     /**
      * GATT 电量服务UUID
      * https://developer.bluetooth.org/gatt/services/Pages/ServiceViewer.aspx?u=org.bluetooth.service.battery_service.xml
@@ -62,8 +77,8 @@ public class BluetoothStatus {
      * @return 表示手机连接状态.
      */
     public boolean getIsConnected() {return mIsConnected & mGattIsSuccess;}
-    private boolean mIsConnected;
-    private boolean mGattIsSuccess;
+    private boolean mIsConnected = false;
+    private boolean mGattIsSuccess = false;
 
 
 //    private Context mContext;
@@ -71,54 +86,121 @@ public class BluetoothStatus {
     private BluetoothGatt mBluetoothGatt;
     private BluetoothGattDescriptor mBluetoothDescriptor;
 
+    private Context mContext;
+    private BluetoothAdapter mAdapter;
     /**
      *
      * @param context  传入Engine 的BaseContext.
      */
     public BluetoothStatus(Context context) {
-        mIsConnected = false;
-        mGattIsSuccess = false;
-
+        mContext = context;
         // 取得蓝牙适配器对象
-        BluetoothAdapter bluetooth_adapter =  BluetoothAdapter.getDefaultAdapter();
-        // 检测蓝牙适配器有冇启动
-        if (bluetooth_adapter != null && bluetooth_adapter.isEnabled()) {
-            // 取得已配对的设备
-            Set<BluetoothDevice> paired_devices = bluetooth_adapter.getBondedDevices();
-            for (BluetoothDevice device : paired_devices) {
-
-//                Log.i("Bluetooth", device.getName() + " " + device.getType() + " UUID:" + device.getUuids());
-
-                // 暂时未知有咩方法确定边只设备先至系当前配对嘅手机, 只取第一个成功建立GATT 嘅设备;
-                // Ticwear 实际使用咗两个蓝牙端口(模式?)同iPhone 通信,
-                // 平时推送系用Classic 模式, 但系哩个模式冇BLE 服务,
-                // 电量信息实际上系通过另一个端口(模式?): Ticwear 用嚟实现模拟蓝牙耳机嗰个端口(模式?),
-                // 间接通过哩个模拟嘅蓝牙耳机嘅BLE 协议得到电量信息.
-                if (device.getType() == BluetoothDevice.DEVICE_TYPE_LE) {
-
-                    /* 暂时只有简单判断一下, 如果Ticwear 修改咗模拟蓝牙耳机个名, 就要再改改... */
-                    if (device.getName().equals("iPhone")) {
-                        // 连接GATT
-                        BluetoothGatt gatt = device.connectGatt(context, true, mGattCallback);
-                        if (gatt != null) {
-                            Log.v("Bluetooth", "Connect " + device.getName() + " Gatt...");
-
-                            break;
-                        }
-                    }
-                }
-            }
-        }
+        mAdapter =  BluetoothAdapter.getDefaultAdapter();
+        if (mAdapter == null) Log.e("Bluetooth", "Unable to get bluetooth adapter!");
     }
 
     @Override
     protected void finalize() throws Throwable {
         super.finalize();
+        DisconnectGATT();
+    }
 
+    /**
+     * 断开蓝牙GATT 连接.
+     */
+    public void DisconnectGATT() {
         // mBluetoothGatt 只会喺onConnectionStateChange 事件中赋值
         if (mBluetoothGatt != null) {
+            mBluetoothGatt.disconnect();
             mBluetoothGatt.close();
             mBluetoothGatt = null;
+        }
+        mIsConnected = false;
+        mGattIsSuccess = false;
+    }
+
+    /**
+     * 连接蓝牙GATT, 注册特征变化事伯接收器.
+     */
+    public void ConnectGATT() {
+        if (mBluetoothGatt != null){
+            Log.w("Bluetooth", "already connected to Gatt!");
+            return;
+        }
+
+//        mIsConnected = false;
+//        mGattIsSuccess = false;
+
+        // 取得蓝牙适配器对象
+//        BluetoothAdapter bluetooth_adapter =  BluetoothAdapter.getDefaultAdapter();
+        // 检测蓝牙适配器有冇启动
+        if (mAdapter != null && mAdapter.isEnabled()) {
+            // 直接开始连接
+            connectGatt();
+        }
+        else {
+            if (!mAdapter.isEnabled()) {
+                Log.w("Bluetooth", "Bluetooth adapter has Disabled!");
+
+                // 延时发起连接
+                if (mWaitHandler == null) mWaitHandler = new Handler();
+                if (mWaitRunnable == null)
+                    mWaitRunnable = new Runnable() {
+                        @Override
+                        public void run() {
+                            if (mAdapter.isEnabled()) connectGatt(); // 完成任务
+                            else {
+                                mWaitHandler.postDelayed(this, 1000); // 继续等...
+                                Log.d("Bluetooth", "Wait for enable...");
+                            }
+//                            // handler自带方法实现定时器
+//                            try {
+//                                handler.postDelayed(this, 1000);
+//                                tvShow.setText(Integer.toString(i++));
+//                                System.out.println("do...");
+//                            } catch (Exception e) {
+//                                e.printStackTrace();
+//                                System.out.println("exception...");
+//                            }
+                        }
+                    };
+                mWaitHandler.postDelayed(mWaitRunnable, 1000); // 启动定时器
+            }
+            else
+                Log.e("Bluetooth", "Bluetooth adapter error!");
+        }
+    }
+
+    private Handler mWaitHandler;
+    private Runnable mWaitRunnable;
+    /**
+     * 哩个私有方法先至真正开始连接!
+     */
+    private void connectGatt(){
+        // 取得已配对的设备
+        Set<BluetoothDevice> paired_devices = mAdapter.getBondedDevices();
+        for (BluetoothDevice device : paired_devices) {
+
+            Log.i("Bluetooth", device.getName() + " " + device.getType() + " UUID:" + device.getUuids());
+
+            // 暂时未知有咩方法确定边只设备先至系当前配对嘅手机, 只取第一个成功建立GATT 嘅设备;
+            // Ticwear 实际使用咗两个蓝牙端口(模式?)同iPhone 通信,
+            // 平时推送系用Classic 模式, 但系哩个模式冇BLE 服务,
+            // 电量信息实际上系通过另一个端口(模式?): Ticwear 用嚟实现模拟蓝牙耳机嗰个端口(模式?),
+            // 间接通过哩个模拟嘅蓝牙耳机嘅BLE 协议得到电量信息.
+            if (device.getType() == BluetoothDevice.DEVICE_TYPE_LE) {
+
+                    /* 暂时只有简单判断一下, 如果Ticwear 修改咗模拟蓝牙耳机个名, 就要再改改... */
+                if (device.getName().equals("iPhone")) {
+                    // 连接GATT
+                    BluetoothGatt gatt = device.connectGatt(mContext, true, mGattCallback);
+                    if (gatt != null) {
+                        Log.d("Bluetooth", "Connect " + device.getName() + " Gatt...");
+
+                        break;
+                    }
+                }
+            }
         }
     }
 
@@ -161,6 +243,9 @@ public class BluetoothStatus {
                 Log.w("Bluetooth", "GATT has disconnected");
                 mIsConnected = false;
                 onConnectStatusChanged(false);
+            }
+            else {
+                Log.w("Bluetooth", "ConnectionState:" + newState);
             }
         }
 
@@ -244,8 +329,6 @@ public class BluetoothStatus {
 //                Log.i("Bluetooth", "Mobile battery:" + mMobileBattery + "%");
             }
         }
-
-
     };
 
     /**
@@ -297,6 +380,7 @@ public class BluetoothStatus {
 
     /**
      * 手机连接状态变化事件
+     * 注意: 如果切换至飞机模式, GATT 连接会立即断开, 而且冇任何事件提示!
      * @param isConnnected true = 已连接
      */
     public void onConnectStatusChanged(boolean isConnnected) {}
