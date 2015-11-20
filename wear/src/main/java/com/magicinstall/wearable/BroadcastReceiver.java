@@ -215,25 +215,25 @@ public class BroadcastReceiver extends android.content.BroadcastReceiver {
     }
 
     /**
-     * 收到位置变化广播事件
+     * TODO 收到位置变化广播事件
      * 未完成
      */
     public void onLocationChanged(){}
 
     /**
-     * 收到时区变化广播事件
+     * TODO 收到时区变化广播事件
      * 未完成
      */
     public void onTimezoneChanged(){}
 
     /**
-     * 收到时间设置广播事件
+     * TODO 收到时间设置广播事件
      * 未完成
      */
     public void onTimeSet(){}
 
     /**
-     * 收到日期变化广播事件
+     * TODO 收到日期变化广播事件
      * 未完成
      */
     public void onDateChanged(){}
