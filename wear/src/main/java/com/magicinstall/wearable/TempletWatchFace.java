@@ -39,11 +39,60 @@ import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * TODO 谂下点想整一个子类包装CanvasWatchFaceService 服务
  * Analog watch face with a ticking second hand. In ambient mode, the second hand isn't shown. On
  * devices with low-bit ambient mode, the hands are drawn without anti-aliasing in ambient mode.
  */
 public class TempletWatchFace extends CanvasWatchFaceService {
     /*+++++++++++++++++++ Wing ++++++++++++++++++++*/
+    /**
+     * 状态图标在最顶部边缘.
+     * Ticwear 实测单图标Xl=142, Yt=0, Xr=177, Yb=29;双图标Xl=131, Yt=0, Xr=187, Yb=29
+     */
+    public static final int STATUSBAR_GRAVITY_TOP_EDGE = 32; // 32-47  64-79 96-127 160-175 192-207 224-255 288
+    /**
+     * 状态图标在顶部.
+     * Ticwear 实测单图标Xl=142, Yt=11, Xr=177, Yb=40;双图标Xl=131, Yt=11, Xr=187, Yb=40
+     */
+    public static final int STATUSBAR_GRAVITY_TOP = 48; // 48  50-63 176-191
+    /**
+     * 状态图标在比顶部稍低.
+     * Ticwear 实测单图标Xl=142, Yt=42, Xr=177, Yb=71;双图标Xl=131, Yt=42, Xr=187, Yb=71
+     */
+    public static final int STATUSBAR_GRAVITY_TOP_BEFORE = 49; // 49
+    /**
+     * 状态图标使用Ticwear默认高度(中间偏上).
+     * Ticwear 实测单图标Xl=142, Yt=90, Xr=177, Yb=119;双图标Xl=131, Yt=90, Xr=187, Yb=119
+     */
+    public static final int STATUSBAR_GRAVITY_DEFAULT90 = 0; // 0-2 4 6-17 19-31 128-159 256-287
+    /**
+     * 状态图标在接近中间.
+     * Ticwear 实测单图标Xl=142, Yt=112, Xr=177, Yb=141;双图标Xl=131, Yt=112, Xr=187, Yb=141
+     */
+    public static final int STATUSBAR_GRAVITY_CENTER_AFTER = 18; // 18
+    /**
+     * 状态图标在圆心</br>
+     * Ticwear 实测单图标Xl=142, Yt=138, Xr=177, Yb=167;双图标Xl=131, Yt=138, Xr=187, Yb=167
+     */
+    public static final int STATUSBAR_GRAVITY_CENTER = 80; // 80 82-95 208-223
+    /**
+     * 状态图标在左边</br>
+     * Ticwear 实测单图标Xl=30, Yt=138, Xr=64, Yb=167;双图标Xl=30, Yt=138, Xr=86, Yb=167
+     */
+    public static final int STATUSBAR_GRAVITY_LEFT = 3;
+    /**
+     * 状态图标在右边</br>
+     * Ticwear 实测单图标 Xl=255, Yt=138, Xr=289, Yb=167;双图标Xl=233, Yt=138, Xr=289, Yb=167
+     */
+    public static final int STATUSBAR_GRAVITY_RIGHT = 5;
+    /**
+     * 状态图标在下方</br>
+     * Ticwear 实测单图标Xl=142, Yt=81, Xr=177, Yb=110;双图标Xl=131, Yt=81, Xr=187, Yb=110
+     */
+    public static final int STATUSBAR_GRAVITY_BOTTOM = 81; // 81
+
+
+
     private WatchFaceDrawer mFaceDrawer;
     /*---------------------------------------------*/
 
@@ -79,7 +128,7 @@ public class TempletWatchFace extends CanvasWatchFaceService {
                 mTime.clear(intent.getStringExtra("time-zone"));
                 mTime.setToNow();
                 /*+++++++++++++++++++ Wing ++++++++++++++++++++*/
-                // 响应时区切换
+                // 响应时区切换 FIXME 哩个广播注册同我个BroadcastReceiver 类冲突, 有时间就解决下
                 mFaceDrawer.setTimeZone(intent.getStringExtra("time-zone"));
                 /*---------------------------------------------*/
             }
@@ -129,6 +178,9 @@ public class TempletWatchFace extends CanvasWatchFaceService {
                     // 唔使用Engine 嘅obTapCommand 事件嘅话唔需要打开哩个设置
                     // Serveic 的onTouchEvent 事件系一直会触发嘅
 //                    .setAcceptsTapEvents(true)
+
+                    // TODO 指示器
+//                    .setStatusBarGravity(5)
                     /*---------------------------------------------*/
                     .build());
 
@@ -151,7 +203,29 @@ public class TempletWatchFace extends CanvasWatchFaceService {
 
         }
 
-
+//        private int testGravity = 207; // 起步数
+//        @Override
+//        public void onTapCommand(int tapType, int x, int y, long eventTime) {
+//            super.onTapCommand(tapType, x, y, eventTime);
+////            Log.d("EngineTest", "Tap Type:" + tapType);
+//            if (tapType < 2) return;
+//
+//            setWatchFaceStyle(new WatchFaceStyle.Builder(TempletWatchFace.this)
+//                    .setCardPeekMode(WatchFaceStyle.PEEK_MODE_SHORT)
+//                    .setBackgroundVisibility(WatchFaceStyle.BACKGROUND_VISIBILITY_INTERRUPTIVE)
+//                    .setShowSystemUiTime(false)
+//                    /*+++++++++++++++++++ Wing ++++++++++++++++++++*/
+//                            // 唔使用Engine 嘅obTapCommand 事件嘅话唔需要打开哩个设置
+//                            // Serveic 的onTouchEvent 事件系一直会触发嘅
+//                    .setAcceptsTapEvents(true)
+//
+//                    .setStatusBarGravity(testGravity)
+//                    /*---------------------------------------------*/
+//                    .build());
+//
+//            Log.d("EngineTest", "Gravity:" + testGravity);
+//            testGravity ++;
+//        }
 
         @Override
         public void onDestroy() {
