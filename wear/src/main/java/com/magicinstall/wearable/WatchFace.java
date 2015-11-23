@@ -12,7 +12,6 @@ import android.support.wearable.watchface.CanvasWatchFaceService;
 import android.support.wearable.watchface.WatchFaceStyle;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 
 import java.lang.ref.WeakReference;
@@ -24,6 +23,15 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by wing on 15/11/22.
  * 哩个类用嚟代替CanvasWatchFaceService 类成为项目主类嘅父类, 令到主类嘅代码更简洁.
+ * </br>
+ * 集成日历对象(受保护属性mCalendar),
+ * 一般唔需要直接操作日历对象,
+ * 用时间相关嘅getter 就可以得到当前年月日时分秒等等.
+ *  * </br>
+ * 集成一个动画定时器, 用嚟做简单嘅动画,
+ * 例如喺交互模式嗰时每秒刷新秒针就系一个简单嘅应用;
+ * 通过喺onAnimationSettingInterval 事件返回唔同嘅帧间隔,
+ * 可以实现一D 动画变化.
  */
 public class WatchFace extends CanvasWatchFaceService {
     /*+++++++++++++++++++ Wing ++++++++++++++++++++*/
@@ -109,6 +117,8 @@ public class WatchFace extends CanvasWatchFaceService {
     public boolean isInteractiveMode() {return mIsInteractive;}
     /**
      * 交互模式切换事件.
+     * </br>
+     * 唔需要调用父类方法.
      * @param inInteractiveMode true = 交互模式
      */
     public void onInteractiveModeChanged(boolean inInteractiveMode) {}
@@ -120,6 +130,8 @@ public class WatchFace extends CanvasWatchFaceService {
     public boolean isVisible() {return mEngine.isVisible();}
     /**
      * 可见模式切换事件
+     * </br>
+     * 唔需要调用父类方法.
      * @param visible true = 屏幕着咗
      */
     public void onVisibilityChanged(boolean visible) {}
@@ -131,6 +143,8 @@ public class WatchFace extends CanvasWatchFaceService {
     public boolean isInAmbientMode() {return mEngine.isInAmbientMode();}
     /**
      * 环境模式切换事件
+     * </br>
+     * 唔需要调用父类方法.
      * @param inAmbientMode true = 环境模式
      */
     public void onAmbientModeChanged(boolean inAmbientMode) {}
@@ -142,13 +156,14 @@ public class WatchFace extends CanvasWatchFaceService {
     public boolean isLowBitAmbient(){
         return mEngine.mLowBitAmbient;
     }
-
     /**
      * 低像素环境切换事件.
-     * 一般将用到嘅画笔对象, 放喺哩度切换抗锯齿开关
-     * @param inAmbientMode true=低像素环境
+     * 一般将用到嘅画笔对象, 放喺哩度切换抗锯齿开关.
+     * </br>
+     * 唔需要调用父类方法.
+     * @param inLowBitAmbient true=低像素环境
      */
-    public void onLowBitAmbientChanged(boolean inAmbientMode) {}
+    public void onLowBitAmbientChanged(boolean inLowBitAmbient) {}
 
     // 保留一个Engine 嘅引用, 用嚟将佢嘅一D 方法曝露到WatchFace 类.
     private Engine mEngine = new Engine();
@@ -173,22 +188,45 @@ public class WatchFace extends CanvasWatchFaceService {
 
     /**
      * 准备初始化表盘的事件.
+     * </br>
+     * 唔需要调用父类方法.
      * @param holder
      */
     public void onCreate(SurfaceHolder holder) {}
 
     /**
      * 表盘被系统回收的事件.
+     * </br>
+     * 唔需要调用父类方法.
      */
     public void onDestroy() {}
 
     /**
-     * 每分钟触发一次
+     * 当发生日期变化/ 系统时间设置改变/ 同埋时区变化, 哩三种情况, 就触发哩个事件;
+     * 另外, 当喺屏幕着咗嘅时候, 亦会每分钟触发一次
+     * 一般只需要用一句invalidate() 重绘一下就得.
+     * </br>
+     * 唔需要调用父类方法.
      */
-    public void onTimeTick() {}
+    public void onTimeChanged() {}
+
+    /**
+     * 时区改变事件
+     * </br>
+     * 如果使用WatchFace 类内置嘅日历对象,
+     * 就唔需要喺哩度更新时区, WatchFace 类会自己更新.
+     * 哩个事件只系为某D 时区变化相关嘅工作提供一个通知,
+     * 冇必要重复注册广播监听器.
+     * </br>
+     * 唔需要调用父类方法.
+     * @param timeZone
+     */
+    public void onTimeZoneChanged(TimeZone timeZone){}
 
     /**
      * 表盘重绘事件
+     * </br>
+     * 唔需要调用父类方法.
      * @param canvas
      * @param bounds
      */
@@ -197,14 +235,8 @@ public class WatchFace extends CanvasWatchFaceService {
     /*---------------------------------------------*/
 
     /**
-     * TODO 改名为定时重绘MSG
-     * Handler message id for updating the time periodically in interactive mode.
-     */
-    private static final int MSG_UPDATE_TIME = 0;
-
-    /**
      * 哩个方法由WallpaperService 类调用.
-     * @return
+     * @return 返回WatchFace 类内部的Engine 类.
      */
     @Override
     public final Engine onCreateEngine() {
@@ -250,11 +282,10 @@ public class WatchFace extends CanvasWatchFaceService {
                     .setBackgroundVisibility(WatchFaceStyle.BACKGROUND_VISIBILITY_INTERRUPTIVE)
                     .setShowSystemUiTime(false);
 
+            // 触发事件
             setWatchFaceStyle(onSetWatchFaceStyle(style_builder)
                     .build()
             );
-
-//            mFaceDrawer = new InformationsDrawer(this, resources, getBaseContext());
 
             // 取得屏幕尺寸
             DisplayMetrics display_metrics =
@@ -262,6 +293,11 @@ public class WatchFace extends CanvasWatchFaceService {
             Log.i(TAG + ".Engine", display_metrics.toString());
             mWidthPixels = display_metrics.widthPixels;
             mHeightPixels = display_metrics.heightPixels;
+
+            // 时区变化广播只喺启动嘅时候注册,
+            // 本对象销毁嘅时候注销!
+            IntentFilter filter = new IntentFilter(Intent.ACTION_TIMEZONE_CHANGED);
+            WatchFace.this.registerReceiver(mTimeZoneReceiver, filter);
 
             // 转发onCreate 事件.
             WatchFace.this.onCreate(holder);
@@ -297,18 +333,17 @@ public class WatchFace extends CanvasWatchFaceService {
         @Override
         public void onDestroy() {
             WatchFace.this.onDestroy();
-            // TODO 删除
-            mUpdateTimeHandler.removeMessages(MSG_UPDATE_TIME);
+            WatchFace.this.unregisterReceiver(mTimeZoneReceiver);
+            stopAnimation();
             super.onDestroy();
         }
 
         /**
-         * Whether the display supports fewer bits for each color in ambient mode. When true, we
-         * disable anti-aliasing in ambient mode.
+         * 低像素环境
          */
         boolean mLowBitAmbient;
         /**
-         * Wing 暂时唔做哩个模式, 将哩个方法设置成final
+         * Wing 暂时唔知仲有乜用...
          * @param properties
          */
         @Override
@@ -326,30 +361,16 @@ public class WatchFace extends CanvasWatchFaceService {
         }
 
         /**
-         * Engine 响应可见模式切换 TODO 考虑下广播接收器点处理
+         * Engine 响应可见模式切换
          * @param visible true = 屏幕着咗
          */
         @Override
-        public void onVisibilityChanged(boolean visible) {
+        public final void onVisibilityChanged(boolean visible) {
             super.onVisibilityChanged(visible);
 
-            if (visible) {
-                registerReceiver();
-
-                // Update time zone in case it changed while we weren't visible.
-//                mTime.clear(TimeZone.getDefault().getID());
-//                mTime.setToNow();
-            } else {
-                unregisterReceiver();
-            }
-
-            // Whether the timer should be running depends on whether we're visible (as well as
-            // whether we're in ambient mode), so we may need to start or stop the timer.
-            updateTimer();
-
-            /*+++++++++++++++++++ Wing ++++++++++++++++++++*/
+            // 转发事件
             WatchFace.this.onVisibilityChanged(visible);
-//            mFaceDrawer.setIsVisible(visible);
+
             // 判断系唔系交互模式
             if (isVisible() && !isInAmbientMode() && !mIsInteractive) {
                 mIsInteractive = true;
@@ -359,7 +380,6 @@ public class WatchFace extends CanvasWatchFaceService {
                 mIsInteractive = false;
                 onInteractiveModeChanged(false);
             }
-            /*---------------------------------------------*/
         }
 
         /**
@@ -368,20 +388,7 @@ public class WatchFace extends CanvasWatchFaceService {
          */
         @Override
         public final void onAmbientModeChanged(boolean inAmbientMode) {
-//            if (mAmbient != inAmbientMode) {
-//                mAmbient = inAmbientMode;
-//                if (mLowBitAmbient) {
-//                    mHandPaint.setAntiAlias(!inAmbientMode);
-//                }
-            // TODO 考虑下需唔需要留俾子类去做
-            invalidate();
-//            }
 
-            // Whether the timer should be running depends on whether we're visible (as well as
-            // whether we're in ambient mode), so we may need to start or stop the timer.
-            updateTimer();
-
-            /*+++++++++++++++++++ Wing ++++++++++++++++++++*/
             // 转发事件
             WatchFace.this.onAmbientModeChanged(inAmbientMode);
 
@@ -394,21 +401,16 @@ public class WatchFace extends CanvasWatchFaceService {
                 mIsInteractive = false;
                 onInteractiveModeChanged(false);
             }
-            /*---------------------------------------------*/
         }
 
         /**
-         * 喺屏幕着嗰下触发一次, 然后每分钟触发一次
-         * 一般用嚟喺环境模式每分钟重绘一次, 咁嘅话, 只需要一句invalidate() 就得.
+         * 当发生日期变化/ 系统时间设置改变/ 同埋时区变化, 哩三种情况, 就触发哩个事件;
+         * 另外, 当喺屏幕着咗嘅时候, 亦会每分钟触发一次
          */
         @Override
         public final void onTimeTick() {
-            /*+++++++++++++++++++ Wing ++++++++++++++++++++*/
-            WatchFace.this.onTimeTick();
-//            Log.v(TAG + ".Engine", "onTimeTick");
-//            WatchFace.this.setTimeToNow(); // 更新时间
-            /*---------------------------------------------*/
-//            invalidate();
+            setTimeToNow();
+            WatchFace.this.onTimeChanged();
         }
 
         /**
@@ -417,99 +419,48 @@ public class WatchFace extends CanvasWatchFaceService {
          * @param bounds
          */
         @Override
-        public void onDraw(Canvas canvas, Rect bounds) {
-            /*+++++++++++++++++++ Wing ++++++++++++++++++++*/
-            // 触发重绘事件.
+        public final void onDraw(Canvas canvas, Rect bounds) {
             WatchFace.this.onDraw(canvas, bounds);
-            /*---------------------------------------------*/
         }
 
         // time-zone 广播接收
-        // TODO 点样可以喺WatchFaceService 类注册, 哩度接收?
         final android.content.BroadcastReceiver mTimeZoneReceiver = new android.content.BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-//                mTime.clear(intent.getStringExtra("time-zone"));
-//                mTime.setToNow();
-
-                /*+++++++++++++++++++ Wing ++++++++++++++++++++*/
-//                WatchFace.this.setTimeToNow();
-
-                // 响应时区切换 FIXME WatchFaceService抢注咗哩个广播, 搞到我个BroadcastReceiver 类冲突, 试下点样可以只接收
-                //
-                WatchFace.this.setTimeZone(intent.getStringExtra("time-zone"));
-                /*---------------------------------------------*/
+            // 更新时区
+            WatchFace.this.setTimeZone(intent.getStringExtra("time-zone"));
+            // 触发事件
+            onTimeZoneChanged(getTimeZone());
             }
         };
 
-        boolean mRegisteredTimeZoneReceiver = false;
+//        boolean mRegisteredTimeZoneReceiver = false;
+
+//        /**
+//         * 注册广播接收器
+//         */
+//        private void registerReceiver() {
+//            if (mRegisteredTimeZoneReceiver) {
+//                return;
+//            }
+//            mRegisteredTimeZoneReceiver = true;
+//            IntentFilter filter = new IntentFilter(Intent.ACTION_TIMEZONE_CHANGED);
+//            WatchFace.this.registerReceiver(mTimeZoneReceiver, filter);
+//        }
+
+//        /**
+//         * 注销广播接收器
+//         */
+//        private void unregisterReceiver() {
+//            if (!mRegisteredTimeZoneReceiver) {
+//                return;
+//            }
+//            mRegisteredTimeZoneReceiver = false;
+//            WatchFace.this.unregisterReceiver(mTimeZoneReceiver);
+//        }
 
         /**
-         * 注册广播接收器
-         */
-        private void registerReceiver() {
-            if (mRegisteredTimeZoneReceiver) {
-                return;
-            }
-            mRegisteredTimeZoneReceiver = true;
-            IntentFilter filter = new IntentFilter(Intent.ACTION_TIMEZONE_CHANGED);
-            WatchFace.this.registerReceiver(mTimeZoneReceiver, filter);
-        }
-
-        /**
-         * 注销广播接收器
-         */
-        private void unregisterReceiver() {
-            if (!mRegisteredTimeZoneReceiver) {
-                return;
-            }
-            mRegisteredTimeZoneReceiver = false;
-            WatchFace.this.unregisterReceiver(mTimeZoneReceiver);
-        }
-
-        // 下边一堆嘢要用哩个Handler
-        final Handler mUpdateTimeHandler = new EngineHandler(this);
-
-        /**
-         * Starts the {@link #mUpdateTimeHandler} timer if it should be running and isn't currently
-         * or stops it if it shouldn't be running but currently is.
-         */
-        private void updateTimer() {
-            mUpdateTimeHandler.removeMessages(MSG_UPDATE_TIME);
-            if (shouldTimerBeRunning()) {
-                mUpdateTimeHandler.sendEmptyMessage(MSG_UPDATE_TIME);
-            }
-        }
-
-        /**
-         * Returns whether the {@link #mUpdateTimeHandler} timer should be running. The timer should
-         * only run when we're visible and in interactive mode.
-         */
-        private boolean shouldTimerBeRunning() {
-            return isVisible() && !isInAmbientMode();
-        }
-
-        /**
-         * Update rate in milliseconds for interactive mode. We update once a second to advance the
-         * second hand.
-         */
-        private final long INTERACTIVE_UPDATE_RATE_MS = TimeUnit.SECONDS.toMillis(1);
-
-        /**
-         * Handle updating the time periodically in interactive mode.
-         */
-        private void handleUpdateTimeMessage() {
-            invalidate();
-            if (shouldTimerBeRunning()) {
-                long timeMs = System.currentTimeMillis();
-                long delayMs = INTERACTIVE_UPDATE_RATE_MS
-                        - (timeMs % INTERACTIVE_UPDATE_RATE_MS);
-                mUpdateTimeHandler.sendEmptyMessageDelayed(MSG_UPDATE_TIME, delayMs);
-            }
-        }
-
-        /**
-         * TODO 挠挠的关键代码
+         * TODO 挠挠的关键代码, 再派生一个SidePanelWatchFace
          * TODO X>319.0f = 挠挠
          * TODO 加一个开关set控制
          * Called as the user performs touch-screen interaction with the
@@ -520,36 +471,123 @@ public class WatchFace extends CanvasWatchFaceService {
          *
          * @param event
          */
-        @Override
-        public void onTouchEvent(MotionEvent event) {
-            super.onTouchEvent(event);
-            Log.d(TAG + ".Engine", String.format(
-                    "onTouchEvent DeviceId:%d Action:%d x:%f,y:%f Pressure:%f Edge:%d Meta:%d ",
-                    event.getDeviceId(),
-                    event.getAction(),
-                    event.getX(),
-                    event.getY(),
-                    event.getPressure(),
-                    event.getEdgeFlags(),
-                    event.getMetaState()
-            ));
+//        @Override
+//        public void onTouchEvent(MotionEvent event) {
+//            Log.d(TAG + ".Engine", String.format(
+//                    "onTouchEvent DeviceId:%d Action:%d x:%f,y:%f Pressure:%f Edge:%d Meta:%d ",
+//                    event.getDeviceId(),
+//                    event.getAction(),
+//                    event.getX(),
+//                    event.getY(),
+//                    event.getPressure(),
+//                    event.getEdgeFlags(),
+//                    event.getMetaState()
+//            ));
+//        }
+    }
+
+    /**
+     * 动画帧刷新消息
+     */
+    private static final int MSG_ANIMATION_FRAME_UPDATE = 0;
+
+    // 用哩个Handler 产生动画
+    private final Handler mAnimationHandler = new AnimationHandler(this);
+
+    /**
+     * 表示动画Handler 系唔系运行紧.
+     */
+    private boolean mAnimationIsRunning = false;
+
+    /**
+     * 启动动画帧定时器
+     * </br>
+     * 立即重新开始定时器,
+     * 哩个方法会立即触发一次重绘事件;
+     * 如果要指定一个延时再触发第一次重绘事件,
+     * 可以用带参数嘅重载版本.
+     */
+    public void startAnimation() {
+        // 实际上系调用一个0延时嘅启动方法
+        startAnimation(0);
+    }
+    /**
+     * 延时启动动画帧定时器
+     *
+     * @param delayMs 指定延时触发第一帧嘅时间间隔, 单位系毫秒.
+     */
+    public void startAnimation(long delayMs) {
+        // 避免重复发送消息
+        if (!mAnimationIsRunning) {
+            mAnimationIsRunning = true;
+            mAnimationHandler.sendEmptyMessageDelayed(MSG_ANIMATION_FRAME_UPDATE, delayMs);
         }
     }
 
-    private static class EngineHandler extends Handler {
-        private final WeakReference<WatchFace.Engine> mWeakReference;
+    public void stopAnimation() {
+        mAnimationHandler.removeMessages(MSG_ANIMATION_FRAME_UPDATE);
+        mAnimationIsRunning = false;
+    }
 
-        public EngineHandler(WatchFace.Engine reference) {
+    /**
+     * 默认动画帧间隔为1秒
+     */
+    private final long ONE_SECOND_INTERVAL = TimeUnit.SECONDS.toMillis(1); // 点解要咁累赘?
+
+    /**
+     * 动画每帧时间间隔设置事件
+     * </br>
+     * 唔需要调用父类方法.
+     * @param interval 提供一个参考嘅秒基准,
+     *                 表示当前瞬间仲有几多毫秒先至到下一个正秒.
+     * @return 返回期望嘅下一帧相对当前瞬间嘅时间(单位系毫秒),
+     *         到时会再次触发哩个事件.
+     */
+    public long onAnimationSettingInterval(long interval) {
+        return interval;
+    }
+
+    /**
+     * Handle 收到消息
+     */
+    private void onHandleUpdateFrameMessage() {
+        // 先触发重绘, 下面再设置下一帧嘅间隔,
+        // 原因喺有D 时候可能会喺onDraw 里面计算下一帧嘅间隔
+        // TODO 有待商确
+        invalidate();
+
+        // 启动下一次定时
+        if (mAnimationIsRunning) {
+            // 计算一个比较准确嘅下一秒刷新时基
+            long delayMs = ONE_SECOND_INTERVAL
+                    // 当前时间取模每秒长度, 就得出当前秒已经过咗几多毫秒,
+                    // 再被每秒长度相减, 就得出当前瞬间到下一正秒嘅毫秒数.
+                    - (System.currentTimeMillis() % ONE_SECOND_INTERVAL);
+
+            long interval_ms = onAnimationSettingInterval(delayMs);
+
+            mAnimationHandler.sendEmptyMessageDelayed(MSG_ANIMATION_FRAME_UPDATE, interval_ms);
+        }
+    }
+
+    /**
+     * 哩个Handler 用作动画定时器.
+     * 哩个私有类嘅代码唔使郁佢.
+     */
+    private static class AnimationHandler extends Handler {
+        private final WeakReference<WatchFace> mWeakReference;
+
+        public AnimationHandler(WatchFace reference) {
             mWeakReference = new WeakReference<>(reference);
         }
 
         @Override
         public void handleMessage(Message msg) {
-            WatchFace.Engine engine = mWeakReference.get();
-            if (engine != null) {
+            WatchFace watch_face = mWeakReference.get();
+            if (watch_face != null) {
                 switch (msg.what) {
-                    case MSG_UPDATE_TIME:
-                        engine.handleUpdateTimeMessage();
+                    case MSG_ANIMATION_FRAME_UPDATE:
+                        watch_face.onHandleUpdateFrameMessage();
                         break;
                 }
             }
@@ -575,10 +613,17 @@ public class WatchFace extends CanvasWatchFaceService {
      * 设置时区.
      * @param id 表示时区ID 嘅字串.
      */
-    public void setTimeZone(String id) {
+    protected void setTimeZone(String id) {
         mCalendar.setTimeZone(TimeZone.getTimeZone(id));
     }
 
+    /**
+     * 取得当前时区
+     * @return
+     */
+    public TimeZone getTimeZone() {
+        return mCalendar.getTimeZone();
+    }
     /**
      *
      * @return 取得年份.
