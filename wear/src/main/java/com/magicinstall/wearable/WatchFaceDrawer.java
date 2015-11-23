@@ -131,6 +131,7 @@ public abstract class WatchFaceDrawer {
         mCalendar = new GregorianCalendar();
 
         mResources = resources;
+
         mDisplayMetrics = resources.getDisplayMetrics();
         // 取得屏幕尺寸
         mWidthPixels = mDisplayMetrics.widthPixels;

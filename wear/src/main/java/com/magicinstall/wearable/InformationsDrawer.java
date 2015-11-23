@@ -92,6 +92,7 @@ public class InformationsDrawer extends WatchFaceDrawer{
         mTextPaint = new TextPaint();
         mTextPaint.setColor(Color.RED);
         mTextPaint.setTextSize(13);
+//        mTextPaint.setStrokeWidth(1.0f);
         mTextPaint.setAntiAlias(true); // 打开抗锯齿
         mTextPaint.setTypeface(mFace); // 指定字体
 
@@ -213,6 +214,26 @@ public class InformationsDrawer extends WatchFaceDrawer{
         mDateString = mDateFormat.format(System.currentTimeMillis());
         rebuildTextLayout();
         mTextLayout.draw(canvas);
+
+//        // 竖
+//        int S1x = 28, S2x = 88, S3x = 129, S4x = 189, S5x = 253, S6x = 291;
+//        canvas.drawLine(S1x, 0, S1x, 319, mTextPaint);
+//        canvas.drawLine(S2x, 0, S2x, 319, mTextPaint);
+//        canvas.drawLine(S3x, 0, S3x, 319, mTextPaint);
+//        canvas.drawLine(S4x, 0, S4x, 319, mTextPaint);
+//        canvas.drawLine(S5x, 0, S5x, 319, mTextPaint);
+//        canvas.drawLine(S6x, 0, S6x, 319, mTextPaint);
+//        // 横
+//        int W1y = 9, W2y = 40, W3y = 88, W7y = 110, W4y = 136, W5y = 238, W6y = 271;
+//        canvas.drawLine(0, W1y, 319, W1y, mTextPaint);
+//        canvas.drawLine(0, W2y, 319, W2y, mTextPaint);
+//        canvas.drawLine(0, W3y, 319, W3y, mTextPaint);
+//        canvas.drawLine(0, W7y, 319, W7y, mTextPaint);
+//        canvas.drawLine(0, W4y, 319, W4y, mTextPaint);
+//        canvas.drawLine(0, W5y, 319, W5y, mTextPaint);
+//        canvas.drawLine(0, W6y, 319, W6y, mTextPaint);
+
+
     }
 
     /**
@@ -376,16 +397,13 @@ public class InformationsDrawer extends WatchFaceDrawer{
             }
         };
         mBroadcastReceiver.ActivateReceiverWithType(new String[]{
-                        BroadcastReceiver.ACTION_AIRPLANE_MODE_CHANGED,
                         BroadcastReceiver.ACTION_BATTERY_CHANGED,
                         BroadcastReceiver.ACTION_BATTERY_LOW,
                         BroadcastReceiver.ACTION_BATTERY_OKAY,
-                        BroadcastReceiver.ACTION_DATE_CHANGED,
-                        BroadcastReceiver.ACTION_LOCALE_CHANGED,
                         BroadcastReceiver.ACTION_POWER_CONNECTED,
                         BroadcastReceiver.ACTION_POWER_DISCONNECTED,
-                        BroadcastReceiver.ACTION_TIME_CHANGED,
-                        BroadcastReceiver.ACTION_TIMEZONE_CHANGED
+                        BroadcastReceiver.ACTION_AIRPLANE_MODE_CHANGED,
+                        BroadcastReceiver.ACTION_LOCALE_CHANGED
                 }
         );
     }
