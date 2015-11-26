@@ -87,8 +87,8 @@ public class StepsObserver extends android.database.ContentObserver{
     public void ActivateObserver() {
         mResolver.registerContentObserver(CONTENT_STEP_URI, true, this);
 
-        querySteps(); // 主动查询一次
         Log.d("StepsObserver", "Step start");
+        querySteps(); // 主动查询一次
     }
 
     /**

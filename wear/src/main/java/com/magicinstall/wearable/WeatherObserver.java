@@ -92,8 +92,8 @@ public class WeatherObserver extends android.database.ContentObserver{
     public void ActivateObserver() {
         mResolver.registerContentObserver(WEATHER_URI, true, this);
 
-        queryWeather();  // 主动查询一次
         Log.d("WeatherObserver", "Weather start");
+        queryWeather();  // 主动查询一次
     }
 
     /**

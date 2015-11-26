@@ -108,7 +108,7 @@ public class WeatherInfo{
     public float PM25;
 
     /**
-     * 设置天气情况
+     * TODO 设置天气情况
      * 由于mobvoi 欠屌, 天气只用字符串表示, 某D情况下会造成麻烦,
      * 所以用哩个setter 将天气转成枚举形式, 喺Status 属性中保存.
      */
@@ -116,7 +116,9 @@ public class WeatherInfo{
         StringStutas = stutas;
 
         switch (stutas) {
+            case "晴": Stutas = WEATHER_SUNNY; break;
             case "多云": Stutas = WEATHER_CLOUDY; break;
+            case "小雨": Stutas = WEATHER_LIGHT_RAIN; break;
 
             default:
                 Stutas = 0;

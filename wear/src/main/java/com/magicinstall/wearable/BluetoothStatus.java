@@ -34,14 +34,6 @@ import java.util.UUID;
  */
 public class BluetoothStatus {
     /**
-     * 查询蓝牙适配器有冇开启.
-     * @return true = 已启动
-     */
-    public boolean getBluetoothAdapterIsEnabled() {
-        return mAdapter != null && mAdapter.isEnabled();
-    }
-
-    /**
      * GATT 电量服务UUID
      * https://developer.bluetooth.org/gatt/services/Pages/ServiceViewer.aspx?u=org.bluetooth.service.battery_service.xml
      */
@@ -100,6 +92,14 @@ public class BluetoothStatus {
     protected void finalize() throws Throwable {
         super.finalize();
         DisconnectGATT();
+    }
+
+    /**
+     * 查询蓝牙适配器有冇开启.
+     * @return true = 已启动
+     */
+    public boolean getBluetoothAdapterIsEnabled() {
+        return mAdapter != null && mAdapter.isEnabled();
     }
 
     /**

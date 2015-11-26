@@ -10,7 +10,7 @@ import java.util.Set;
 /**
  * Created by wing on 15/11/17.
  * 哩个类用嚟接收系统自带嘅一D 广播事件.
- * 挑咗十个手表可能用得上嘅广播事件, 例如手表电量变化等,
+ * 挑咗几个手表可能用得上嘅广播事件, 例如手表电量变化等,
  * 具体有边D广播可以睇本类内置嘅静态常量(ACTION_XXXX)嘅注释.
  *
  * 用法十分简单, 只需要匿名继承哩个类, 重写onXXXChanged 方法就可以, 代码非常简洁.
@@ -50,17 +50,33 @@ public class BroadcastReceiver extends android.content.BroadcastReceiver {
     public static final String ACTION_LOCALE_CHANGED = Intent.ACTION_LOCALE_CHANGED;
     /**
      * 时区
+     * </br>
+     * 用WatchFace 嘅onTimeZoneChanged 事件代替.
      */
+    @Deprecated
     public static final String ACTION_TIMEZONE_CHANGED = Intent.ACTION_TIMEZONE_CHANGED;
     /**
      * 时间设置
+     * </br>
+     * 用WatchFace onTimeChanged 事件代替.
      */
+    @Deprecated
     public static final String ACTION_TIME_CHANGED = Intent.ACTION_TIME_CHANGED;
-
     /**
-     * 日期发生改变*
+     * 日期发生改变
+     * </br>
+     * 用WatchFace onTimeChanged 事件代替.
      */
+    @Deprecated
     public static final String ACTION_DATE_CHANGED = Intent.ACTION_DATE_CHANGED;
+    /**
+     * 每分钟的时间变化
+     * </br>
+     * 用WatchFace onTimeChanged 事件代替.
+     */
+    @Deprecated
+    public static final String ACTION_TIME_TICK = Intent.ACTION_TIME_TICK;
+
 
     /**
      * @param context 传入Engine 的BaseContext.
@@ -90,6 +106,7 @@ public class BroadcastReceiver extends android.content.BroadcastReceiver {
      * @param actions 最好系写成BroadcastReceiver.ACTION_XXXX 的数组, 有助提高代码可读性.
      */
     public void ActivateReceiverWithType(String[] actions) {
+        // TODO 试下改成用xxxFilter.addAction , 而唔系一个Action 一个Filter
         for (String a : actions) {
             // 唔知点解唔可以读返回值, 一读就收唔到广播
             mContext.registerReceiver(this, new IntentFilter(a));
@@ -138,9 +155,9 @@ public class BroadcastReceiver extends android.content.BroadcastReceiver {
                 onAirplaneMode(intent.getBooleanExtra("state", true));
                 break;
 
-//            case "android.intent.action.LOCALE_CHANGED":
-//                onLocationChanged();
-//                break;
+            case "android.intent.action.LOCALE_CHANGED":
+                onLocationChanged();
+                break;
 
 //            case "android.intent.action.TIMEZONE_CHANGED":
 //                onTimezoneChanged();
@@ -220,21 +237,18 @@ public class BroadcastReceiver extends android.content.BroadcastReceiver {
      */
     public void onLocationChanged(){}
 
-    /**
-     * TODO 收到时区变化广播事件
-     * 未完成
-     */
-    public void onTimezoneChanged(){}
-
-    /**
-     * TODO 收到时间设置广播事件
-     * 未完成
-     */
-    public void onTimeSet(){}
-
-    /**
-     * TODO 收到日期变化广播事件
-     * 未完成
-     */
-    public void onDateChanged(){}
+//    /**
+//     * 收到时区变化广播事件
+//     */
+//    public void onTimezoneChanged(){}
+//
+//    /**
+//     * 收到时间设置广播事件
+//     */
+//    public void onTimeSet(){}
+//
+//    /**
+//     * 收到日期变化广播事件
+//     */
+//    public void onDateChanged(){}
 }
