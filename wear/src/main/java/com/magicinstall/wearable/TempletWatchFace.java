@@ -17,22 +17,28 @@
 package com.magicinstall.wearable;
 
 import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.util.Log;
 import android.view.SurfaceHolder;
 
 /**
- * TODO 试下将WatchFace 改名为TempletWatchFace, TempletWatchFace改名为TestWatchFace
+ *
  */
-public class TempletWatchFace extends WatchFace {
+public class TempletWatchFace extends InformationsWatchFace {
+    private static final String TAG = "Templet";
+
     Paint mBackgroundPaint;
     Paint mHandPaint;
 
-//    Time mTime;
+    Bitmap mBGImage;
 
     @Override
     public void onCreate(SurfaceHolder holder) {
+        super.onCreate(holder);
 
         Resources resources = TempletWatchFace.this.getResources();
 
@@ -45,7 +51,9 @@ public class TempletWatchFace extends WatchFace {
         mHandPaint.setAntiAlias(true);
         mHandPaint.setStrokeCap(Paint.Cap.ROUND);
 
-//        mTime = new Time();
+        mBGImage = BitmapFactory.decodeResource(getResources(), R.drawable.bg_triwa);
+        Log.d(TAG, "BGImage " + mBGImage.getWidth() + "," + mBGImage.getHeight());
+//        mBGImage = getResources().getDrawable((R.mipmap.bg_triwa), null);
     }
 
     /**
@@ -56,7 +64,9 @@ public class TempletWatchFace extends WatchFace {
      */
     @Override
     public void onTimeChanged() {
-        invalidate();
+        // 交互模式由动画Handler 触发重绘;
+        // 非交互模式用哩个事件触发重绘.
+        if (!isInteractiveMode()) invalidate();
     }
 
     /**
@@ -68,6 +78,8 @@ public class TempletWatchFace extends WatchFace {
      */
     @Override
     public void onInteractiveModeChanged(boolean inInteractiveMode) {
+        super.onInteractiveModeChanged(inInteractiveMode);
+
         if (inInteractiveMode)
             startAnimation(
                     1000 - (System.currentTimeMillis() % 1000)
@@ -83,8 +95,19 @@ public class TempletWatchFace extends WatchFace {
      */
     @Override
     public void onVisibilityChanged(boolean visible) {
-        super.onVisibilityChanged(visible);
-        if (visible) invalidate();
+        if (visible && !isInteractiveMode()) invalidate();
+    }
+
+    /**
+     * 环境模式切换事件
+     * </br>
+     * 唔需要调用父类方法.
+     *
+     * @param inAmbientMode true = 环境模式
+     */
+    @Override
+    public void onAmbientModeChanged(boolean inAmbientMode) {
+        if (inAmbientMode && isVisible()) invalidate();
     }
 
     /**
@@ -95,11 +118,19 @@ public class TempletWatchFace extends WatchFace {
      */
     @Override
     public void onLowBitAmbientChanged(boolean inLowBitAmbient) {
+        mBackgroundPaint.setAntiAlias(!inLowBitAmbient);
         mHandPaint.setAntiAlias(!inLowBitAmbient);
     }
 
     @Override
     public void onDraw(Canvas canvas, Rect bounds) {
+        if (mBGImage != null) {
+//            mBGImage.draw(canvas);
+            canvas.drawBitmap(mBGImage, 0.0f, 0.0f, mBackgroundPaint);
+            super.onDraw(canvas, bounds);
+            return;
+        }
+
         setTimeToNow(); // 更新时间
 //        mTime.setToNow();
 

@@ -3,7 +3,6 @@ package com.magicinstall.wearable;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Rect;
@@ -11,11 +10,11 @@ import android.graphics.Typeface;
 import android.hardware.Sensor;
 import android.os.BatteryManager;
 import android.os.Build;
-import android.support.wearable.watchface.CanvasWatchFaceService;
 import android.text.Layout;
 import android.text.StaticLayout;
 import android.text.TextPaint;
 import android.util.Log;
+import android.view.SurfaceHolder;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -23,16 +22,21 @@ import java.util.Locale;
 
 /**
  * Created by wing on 15/11/7.
+ * 哩个类主要为咗测试用;
+ * 由于继承自GestureWatchFace, 因此比较占资源,
+ * 测试完可以将项目主类嘅父类改返更早嘅祖先类.
  */
-public class InformationsDrawer extends WatchFaceDrawer{
+public class InformationsWatchFace extends GestureWatchFace{
+    private static final String TAG = "Informations";
+
     private String mSystemVersionString;
     private String mAppVersionString;
 
-    private TextPaint mTextPaint;
+    private TextPaint mTextPaint = new TextPaint();
     private StaticLayout mTextLayout;
 
     private String mDateString;
-    private DateFormat mDateFormat;
+    private DateFormat mDateFormat = new SimpleDateFormat("yyyy/MMMM/d EEEEH:m:s\nz", Locale.getDefault());
 
     private long  mPrevFrameMs;
 
@@ -80,18 +84,29 @@ public class InformationsDrawer extends WatchFaceDrawer{
      */
 //    private LocationService mLocationService;
 
-    public InformationsDrawer(CanvasWatchFaceService.Engine engine, Resources resources, Context context) {
-        super(engine, resources, context);
+
+    /**
+     * 准备初始化表盘的事件.
+     * </br>
+     * 必须调用父类方法.
+     *
+     * @param holder
+     */
+    @Override
+    public void onCreate(SurfaceHolder holder) {
+        Log.d(TAG, "onCreate");
+
         // 指定系统字体
         Typeface mFace = Typeface.create("Roboto", Typeface.NORMAL);
 
         // 指定assets 目录入边嘅TTF字体
-//        Typeface mFace = Typeface.createFromAsset(mResources.getAssets(), "fonts/Roboto-Thin.ttf");
+//        Typeface mFace = Typeface.createFromAsset(getResources().getAssets(), "fonts/Roboto-Thin.ttf");
 
         // 设置字体画笔
-        mTextPaint = new TextPaint();
+//        mTextPaint = new TextPaint();
         mTextPaint.setColor(Color.RED);
         mTextPaint.setTextSize(13);
+        mTextPaint.setShadowLayer(2.0f, 0.0f, 0.0f, 0xFF000000); // 阴影
 //        mTextPaint.setStrokeWidth(1.0f);
         mTextPaint.setAntiAlias(true); // 打开抗锯齿
         mTextPaint.setTypeface(mFace); // 指定字体
@@ -101,7 +116,9 @@ public class InformationsDrawer extends WatchFaceDrawer{
 
         // 设置时间格式
 //        mDateFormat = DateFormat.getDateTimeInstance(DateFormat.FULL, DateFormat.FULL, Locale.getDefault());
-        mDateFormat = new SimpleDateFormat("yyyy/MMMM/d EEEEH:m:s\nz", Locale.getDefault());
+//        mDateFormat = new SimpleDateFormat("yyyy/MMMM/d EEEEH:m:s\nz", Locale.getDefault());
+
+        Context context = getBaseContext();
 
         // 激活传感器
         mSensorMonitor = newSensorsMonitor(context);
@@ -172,7 +189,7 @@ public class InformationsDrawer extends WatchFaceDrawer{
 //        String str_visible = (getIsVisible() ? "Visible" : "Invisible") + "\n";
 
         // 刷新模式
-        String str_ambient = (getIsAmbient() ? "Ambient" : "Interactive") + "\n";
+        String str_ambient = (isInAmbientMode() ? "Ambient" : "Interactive") + "\n";
 
         // 帧率
         String str_FPS =
@@ -209,8 +226,18 @@ public class InformationsDrawer extends WatchFaceDrawer{
 
     }
 
+    /**
+     * 重绘事件
+     * </br>
+     * 如果要显示信息, 可以选择性调用父类方法(最好喺onDraw 嘅后面).
+     *
+     * @param canvas
+     * @param bounds
+     */
     @Override
-    public void Draw(Canvas canvas, Rect bounds) {
+    public void onDraw(Canvas canvas, Rect bounds) {
+        super.onDraw(canvas, bounds);
+
         mDateString = mDateFormat.format(System.currentTimeMillis());
         rebuildTextLayout();
         mTextLayout.draw(canvas);
@@ -238,11 +265,15 @@ public class InformationsDrawer extends WatchFaceDrawer{
 
     /**
      * 交互模式切换事件
+     * </br>
+     * 必须调用父类方法.
+     *
      * @param inInteractiveMode
      */
     @Override
-    protected void onInteractiveModeChanged(boolean inInteractiveMode) {
+    public void onInteractiveModeChanged(boolean inInteractiveMode) {
 //        super.onInteractiveModeChanged(inInteractiveMode);
+        Log.d(TAG, "onInteractiveModeChanged");
         if (inInteractiveMode) {
             mSensorMonitor.ActivateSensorsWithType(new int[]{
                             Sensor.TYPE_ACCELEROMETER,

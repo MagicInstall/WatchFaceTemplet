@@ -1,5 +1,6 @@
 package com.magicinstall.wearable;
 
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 
@@ -41,6 +42,7 @@ public class GestureWatchFace extends WatchFace
      *         返回false 表示叫分析器继续做嘢.
      */
     public boolean onDown(float x, float y) {
+        Log.v(TAG + ".Main", "onDown x:" + x + ",y:" + y);
         return false;
     }
     /**
@@ -53,6 +55,7 @@ public class GestureWatchFace extends WatchFace
      *         返回false 表示叫分析器继续做嘢.
      */
     public boolean onSidePanelDown(float y) {
+        Log.v(TAG + ".SidePanel", "onDown y:" + y);
         return false;
     }
 
@@ -71,6 +74,7 @@ public class GestureWatchFace extends WatchFace
      *         返回false 表示叫分析器继续做嘢.
      */
     public boolean onSingleTapUp(float x, float y) {
+        Log.v(TAG + ".Main", "onSingleTapUp x:" + x + ",y:" + y);
         return false;
     }
     /**
@@ -86,6 +90,7 @@ public class GestureWatchFace extends WatchFace
      *         返回false 表示叫分析器继续做嘢.
      */
     public boolean onSidePanelSingleTapUp(float y) {
+        Log.v(TAG + ".SidePanel", "onSingleTapUp y:" + y);
         return false;
     }
 
@@ -104,6 +109,7 @@ public class GestureWatchFace extends WatchFace
      *         返回false 表示叫分析器继续做嘢.
      */
     public boolean onSingleTapConfirmed(float x, float y) {
+        Log.v(TAG + ".Main", "onSingleTapConfirmed x:" + x + ",y:" + y);
         return false;
     }
 
@@ -121,6 +127,7 @@ public class GestureWatchFace extends WatchFace
      *         返回false 表示叫分析器继续做嘢.
      */
     public boolean onSidePanelSingleTapConfirmed(float y) {
+        Log.v(TAG + ".SidePanel", "onSingleTapConfirmed y:" + y);
         return false;
     }
 
@@ -130,11 +137,17 @@ public class GestureWatchFace extends WatchFace
      * onDown->onShowPress->onLongPress
      * </br>
      * 唔需要调用父类方法.
+     * </br>
+     * 注意: 由于Ticwatch 默认长㩒手势会切换到更换表盘,
+     *      目前未有办法更改系统嘅设置,
+     *      所以最好酌情使用.
      *
      * @param x
      * @param y
      */
-    public void onLongPress(float x, float y) {}
+    public void onLongPress(float x, float y) {
+        Log.v(TAG + ".Main", "onLongPress x:" + x + ",y:" + y);
+    }
     /**
      * 侧屏长㩒手势事件
      * 触发顺序：
@@ -144,7 +157,9 @@ public class GestureWatchFace extends WatchFace
      *
      * @param y
      */
-    public void onSidePanelLongPress(float y) {}
+    public void onSidePanelLongPress(float y) {
+        Log.v(TAG + ".SidePanel", "onLongPress y:" + y);
+    }
 
     /**
      * 喺onDown 同onLongPress事件之间触发
@@ -152,21 +167,32 @@ public class GestureWatchFace extends WatchFace
      * onDown->onShowPress->onLongPress
      * </br>
      * 唔需要调用父类方法.
+     * </br>
+     * 注意: 由于Ticwatch 默认长㩒手势会切换到更换表盘,
+     *      目前未有办法更改系统嘅设置,
+     *      所以最好酌情使用.
      *
      * @param x
      * @param y
      */
-    public void onShowPress(float x, float y) {}
+    public void onShowPress(float x, float y) {
+        Log.v(TAG + ".Main", "onShowPress x:" + x + ",y:" + y);
+    }
     /**
      * 喺onSidePanelDown 同onSidePanelLongPress事件之间触发
      * 触发顺序：
      * onSidePanelDown->onSidePanelShowPress->onSidePanelLongPress
      * </br>
      * 唔需要调用父类方法.
+     * </br>
+     * 实测喺Ticwatch 准确率较低, 非常容易触发onSidePanelLongPress,
+     * 唔建议使用.
      *
      * @param y
      */
-    public void onSidePanelShowPress(float y) {}
+    public void onSidePanelShowPress(float y) {
+        Log.v(TAG + ".SidePanel", "onShowPress y:" + y);
+    }
 
     /**
      * 主屏双击事件
@@ -181,12 +207,16 @@ public class GestureWatchFace extends WatchFace
      *         唔放开手, 可以喺onDoubleTapEvent 事件继续响应后面嘅事件(例如滚动).
      */
     public boolean onDoubleTap(float x, float y) {
+        Log.v(TAG + ".Main", "onDoubleTap x:" + x + ",y:" + y);
         return false;
     }
     /**
      * 侧屏双击事件
      * </br>
      * 唔需要调用父类方法.
+     * </br>
+     * 实测喺Ticwatch 准确率较低, 多数情况只触发单击事件,
+     * 唔建议使用.
      *
      * @param y
      * @return 返回false 表示叫分析器继续做嘢;
@@ -195,6 +225,7 @@ public class GestureWatchFace extends WatchFace
      *         唔放开手, 可以喺onSidePanelDoubleTapEvent 事件继续响应后面嘅事件(例如滚动).
      */
     public boolean onSidePanelDoubleTap(float y) {
+        Log.v(TAG + ".SidePanel", "onDoubleTap y:" + y);
         return false;
     }
 
@@ -209,6 +240,8 @@ public class GestureWatchFace extends WatchFace
      *         返回false 表示叫分析器继续做嘢.
      */
     public boolean onDoubleTapEvent(MotionEvent e) {
+        Log.v(TAG + ".Main",
+                "onDoubleTapEvent Action:" + e.getAction() + " x:" + e.getX() + ",y:" + e.getY());
         return false;
     }
     /**
@@ -216,12 +249,17 @@ public class GestureWatchFace extends WatchFace
      * 可以实现类似微信嘅向上滑动取消发送之类嘅操作.
      * </br>
      * 唔需要调用父类方法.
+     * </br>
+     * 实测喺Ticwatch 准确率较低, 多数情况只触发单击事件,
+     * 唔建议使用.
      *
      * @param e 直接提供事件对象, 自己谂点样处理.
      * @return 如果唔想分析器继续分析后面嘅手势, 可以返回一个true, 表示已经处理咗;
      *         返回false 表示叫分析器继续做嘢.
      */
     public boolean onSidePanelDoubleTapEvent(MotionEvent e) {
+        Log.v(TAG + ".SidePanel",
+                "onDoubleTapEvent Action:" + e.getAction() + " y:" + e.getY());
         return false;
     }
 
@@ -231,6 +269,10 @@ public class GestureWatchFace extends WatchFace
      * onDown->onScroll->onScroll->...
      * </br>
      * 唔需要调用父类方法.
+     * </br>
+     * 注意: 由于Ticwatch 嚟表盘滑动系呼出各种系统界面,
+     *      目前未有办法更改系统嘅设置,
+     *      所以最好酌情使用.
      *
      * @param downX     最初落手嘅X轴位置.
      * @param downY     最初落手嘅Y轴位置.
@@ -242,6 +284,7 @@ public class GestureWatchFace extends WatchFace
      *         返回false 表示叫分析器继续做嘢.
      */
     public boolean onScroll(float downX, float downY, float distanceX, float distanceY) {
+        Log.v(TAG + ".Main", "onScroll distanceX:" + distanceX + ",distanceY:" + distanceY);
         return false;
     }
     /**
@@ -258,6 +301,7 @@ public class GestureWatchFace extends WatchFace
      *         返回false 表示叫分析器继续做嘢.
      */
     public boolean onSidePanelScroll(float downY, float distanceY) {
+        Log.v(TAG + ".SidePanel", "onScroll distance:" + distanceY);
         return false;
     }
 
@@ -268,6 +312,10 @@ public class GestureWatchFace extends WatchFace
      * onDown->onScroll->onScroll->...->onFling
      * </br>
      * 唔需要调用父类方法.
+     * </br>
+     * 注意: 由于Ticwatch 嚟表盘滑动系呼出各种系统界面,
+     *      目前未有办法更改系统嘅设置,
+     *      所以最好酌情使用.
      *
      * @param downX     最初落手嘅X轴位置.
      * @param downY     最初落手嘅Y轴位置.
@@ -277,6 +325,7 @@ public class GestureWatchFace extends WatchFace
      *         返回false 表示叫分析器继续做嘢.
      */
     public boolean onFling(float downX, float downY, float velocityX, float velocityY) {
+        Log.v(TAG + ".Main", "onFling velocityX:" + velocityX + ",velocityY:" + velocityY);
         return false;
     }
     /**
@@ -286,6 +335,9 @@ public class GestureWatchFace extends WatchFace
      * onSidePanelDown->onSidePanelScroll->onSidePanelScroll->...->onSidePanelFling
      * </br>
      * 唔需要调用父类方法.
+     * </br>
+     * 实测喺Ticwatch 准确率较低, 极难触发哩个事件,
+     * 唔建议使用.
      *
      * @param downY     最初落手嘅Y轴位置.
      * @param velocityY Y轴上的移动速度，像素/秒
@@ -293,6 +345,7 @@ public class GestureWatchFace extends WatchFace
      *         返回false 表示叫分析器继续做嘢.
      */
     public boolean onSidePanelFling(float downY, float velocityY) {
+        Log.v(TAG + ".SidePanel", "onFling velocity:" + velocityY);
         return false;
     }
 
@@ -444,18 +497,15 @@ public class GestureWatchFace extends WatchFace
         }
     }
 
-    // 保留一个Engine 嘅引用, 用嚟将佢嘅一D 方法曝露到SidePanelWatchFace 类.
-//    private Engine mEngine;
-
     /**
      * 哩个方法由WallpaperService 类调用.
      * @return GestureWatchFace 类内部的Engine 类.
      */
     @Override
-    public Engine onCreateEngine() {
-        return new Engine();
-//        mEngine = new Engine();
-//        return mEngine;
+    public GestureWatchFace.Engine onCreateEngine() {
+//        Log.d(TAG, "onCreateEngine");
+        mEngine = (WatchFace.Engine)new Engine();
+        return (GestureWatchFace.Engine)mEngine;
     }
 
     /**
@@ -470,7 +520,7 @@ public class GestureWatchFace extends WatchFace
 
         /**
          * 主触摸事件
-         * 哩个事件只会喺交互模式触发, 所以唔需要自己管理开关嘅逻辑.
+         * TODO 要自己管理开关嘅逻辑.
          * @param event
          */
         @Override

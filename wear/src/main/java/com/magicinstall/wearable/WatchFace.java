@@ -34,7 +34,6 @@ import java.util.concurrent.TimeUnit;
  * 可以实现一D 动画变化.
  */
 public class WatchFace extends CanvasWatchFaceService {
-    /*+++++++++++++++++++ Wing ++++++++++++++++++++*/
     private static final String TAG = "Wing.WatchFace";
 
     /**
@@ -165,15 +164,13 @@ public class WatchFace extends CanvasWatchFaceService {
      */
     public void onLowBitAmbientChanged(boolean inLowBitAmbient) {}
 
-    // 保留一个Engine 嘅引用, 用嚟将佢嘅一D 方法曝露到WatchFace 类.
-    private Engine mEngine = new Engine();
-
     /**
      * 请求重绘, 由CanvasWatchFaceService 类调用onDraw() 方法.
      * 注意: 必须系喺UI线程先至可以直接用哩个方法, 工作者线程可以用postInvalidate() 方法.
      */
     public final void invalidate(){
         // 映射到Engine 的invalidate() 方法.
+//        if (mEngine == null) return;
         mEngine.invalidate();
     }
 
@@ -183,6 +180,7 @@ public class WatchFace extends CanvasWatchFaceService {
      */
     public final void postInvalidate(){
         // 映射到Engine postInvalidate() 方法.
+//        if (mEngine == null) return;
         mEngine.postInvalidate();
     }
 
@@ -232,19 +230,34 @@ public class WatchFace extends CanvasWatchFaceService {
      */
     public void onDraw(Canvas canvas, Rect bounds) {}
 
-    /*---------------------------------------------*/
+    /**
+     * 保留一个Engine 嘅引用, 用嚟将佢嘅一D 方法曝露到WatchFace 类.
+     * WatchFaceService 最开始产生哩个事件嘅时候,
+     * WallpaperService 仲未调用onCreateEngine 创建Engine 嘅实例,
+     * 所以一开始就要自己先new 一个实例;
+     */
+    protected Engine mEngine; // = new Engine();
 
     /**
      * 哩个方法由WallpaperService 类调用.
+     * </br>
+     *
+     * 注意: 1. 如果子类派生出新嘅Engine 类, 就一定要重载哩个方法!
+     *      原因系由于WatchFace 类使用咗一个mEngine 变量嚟转发方法去内部嘅Engine 实例,
+     *      所以子类一定要喺哩个事件入边对mEngine 变量赋一个实例,
+     *      否则, invalidate 之类嘅方法会出错;
+     *      虽然有办法可以解决(例如Handler), 但代码太繁复,
+     *      不如喺哩度加句 mEngine = (WatchFace.Engine)new Engine(); 仲方便.
+     *
      * @return 返回WatchFace 类内部的Engine 类.
      */
     @Override
-    public final Engine onCreateEngine() {
+    public Engine onCreateEngine() {
+//        Log.d(TAG, "onCreateEngine");
+        mEngine = new Engine();
         return mEngine;
     }
 
-
-    /*+++++++++++++++++++ Wing ++++++++++++++++++++*/
     /**
      * 哩个方法用嚟简化onCreate 事件内嘅代码,
      * 将WatchFaceStyle 对象嘅设置代码放喺哩度,
@@ -267,14 +280,12 @@ public class WatchFace extends CanvasWatchFaceService {
         return defaultBuilder;
     }
 
-    /*---------------------------------------------*/
-
-    private class Engine extends CanvasWatchFaceService.Engine
-    {
+    protected class Engine extends CanvasWatchFaceService.Engine {
 
         @Override
         public void onCreate(SurfaceHolder holder) {
             super.onCreate(holder);
+//            Log.d(TAG + ".Engine", "onCreate");
 
             // 设置WatchFaceStyle
             WatchFaceStyle.Builder style_builder = new WatchFaceStyle.Builder(WatchFace.this)
@@ -284,7 +295,7 @@ public class WatchFace extends CanvasWatchFaceService {
 
             // 触发事件
             setWatchFaceStyle(onSetWatchFaceStyle(style_builder)
-                    .build()
+                            .build()
             );
 
             // 取得屏幕尺寸
@@ -302,7 +313,6 @@ public class WatchFace extends CanvasWatchFaceService {
             // 转发onCreate 事件.
             WatchFace.this.onCreate(holder);
         }
-
 
 
 //        private int testGravity = 207; // 起步数
@@ -342,26 +352,33 @@ public class WatchFace extends CanvasWatchFaceService {
          * 低像素环境
          */
         boolean mLowBitAmbient;
+
         /**
-         * Wing 暂时唔知仲有乜用...
+         * Wing 暂时唔知仲有冇其它用处...
+         *
          * @param properties
          */
         @Override
         public final void onPropertiesChanged(Bundle properties) {
             super.onPropertiesChanged(properties);
 
-            System.out.print("onPropertiesChanged-mLowBitAmbient:");
-            System.out.print(mLowBitAmbient);
-            mLowBitAmbient = properties.getBoolean(PROPERTY_LOW_BIT_AMBIENT, false);
-            System.out.print("->");
-            System.out.println(mLowBitAmbient);
+            // 睇下低像素环境有冇变化
+            boolean is_low_bit = properties.getBoolean(PROPERTY_LOW_BIT_AMBIENT, false);
+            if (is_low_bit != mLowBitAmbient) {
+                Log.d(TAG + ".Engine",
+                        "LowBitAmbientChanged:" + mLowBitAmbient + "->" + is_low_bit);
+                mLowBitAmbient = is_low_bit;
 
-            // 触发低像素环境切换事件
-            onLowBitAmbientChanged(mLowBitAmbient);
+                // 触发低像素环境切换事件
+                onLowBitAmbientChanged(mLowBitAmbient);
+            }
+
+            // 睇WatchFaceService 嘅源码应该仲有一个 PROPERTY_BURN_IN_PROTECTION 属性
         }
 
         /**
          * Engine 响应可见模式切换
+         *
          * @param visible true = 屏幕着咗
          */
         @Override
@@ -371,12 +388,12 @@ public class WatchFace extends CanvasWatchFaceService {
             // 转发事件
             WatchFace.this.onVisibilityChanged(visible);
 
+            Log.d(TAG + "Engine", "Visible:" + visible + " Ambient:" + isInAmbientMode() + " Interactive:" + mIsInteractive);
             // 判断系唔系交互模式
             if (isVisible() && !isInAmbientMode() && !mIsInteractive) {
                 mIsInteractive = true;
                 onInteractiveModeChanged(true);
-            }
-            else if (!isVisible() || isInAmbientMode()) {
+            } else if (!isVisible() || isInAmbientMode()) {
                 mIsInteractive = false;
                 onInteractiveModeChanged(false);
             }
@@ -384,6 +401,7 @@ public class WatchFace extends CanvasWatchFaceService {
 
         /**
          * Engine 响应环境模式和交互模式间切换
+         *
          * @param inAmbientMode true = 环境模式
          */
         @Override
@@ -391,13 +409,13 @@ public class WatchFace extends CanvasWatchFaceService {
 
             // 转发事件
             WatchFace.this.onAmbientModeChanged(inAmbientMode);
+            Log.d(TAG + "Engine", "Visible:" + isVisible() + " Ambient:" + isInAmbientMode() + " Interactive:" + mIsInteractive);
 
             // 判断系唔系交互模式
             if (isVisible() && !isInAmbientMode() && !mIsInteractive) {
                 mIsInteractive = true;
                 onInteractiveModeChanged(true);
-            }
-            else if (!isVisible() || isInAmbientMode()) {
+            } else if (!isVisible() || isInAmbientMode()) {
                 mIsInteractive = false;
                 onInteractiveModeChanged(false);
             }
@@ -415,6 +433,7 @@ public class WatchFace extends CanvasWatchFaceService {
 
         /**
          * 转发重绘事件
+         *
          * @param canvas
          * @param bounds
          */
@@ -427,10 +446,10 @@ public class WatchFace extends CanvasWatchFaceService {
         final android.content.BroadcastReceiver mTimeZoneReceiver = new android.content.BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-            // 更新时区
-            WatchFace.this.setTimeZone(intent.getStringExtra("time-zone"));
-            // 触发事件
-            onTimeZoneChanged(getTimeZone());
+                // 更新时区
+                WatchFace.this.setTimeZone(intent.getStringExtra("time-zone"));
+                // 触发事件
+                onTimeZoneChanged(getTimeZone());
             }
         };
 
@@ -458,34 +477,7 @@ public class WatchFace extends CanvasWatchFaceService {
 //            mRegisteredTimeZoneReceiver = false;
 //            WatchFace.this.unregisterReceiver(mTimeZoneReceiver);
 //        }
-
-        /**
-         * TODO 挠挠的关键代码, 再派生一个SidePanelWatchFace
-         * TODO X>319.0f = 挠挠
-         * TODO 加一个开关set控制
-         * Called as the user performs touch-screen interaction with the
-         * window that is currently showing this wallpaper.  Note that the
-         * events you receive here are driven by the actual application the
-         * user is interacting with, so if it is slow you will get fewer
-         * move events.
-         *
-         * @param event
-         */
-//        @Override
-//        public void onTouchEvent(MotionEvent event) {
-//            Log.d(TAG + ".Engine", String.format(
-//                    "onTouchEvent DeviceId:%d Action:%d x:%f,y:%f Pressure:%f Edge:%d Meta:%d ",
-//                    event.getDeviceId(),
-//                    event.getAction(),
-//                    event.getX(),
-//                    event.getY(),
-//                    event.getPressure(),
-//                    event.getEdgeFlags(),
-//                    event.getMetaState()
-//            ));
-//        }
     }
-
     /**
      * 动画帧刷新消息
      */
@@ -517,6 +509,7 @@ public class WatchFace extends CanvasWatchFaceService {
      * @param delayMs 指定延时触发第一帧嘅时间间隔, 单位系毫秒.
      */
     public void startAnimation(long delayMs) {
+//        Log.d(TAG, "startAnimation");
         // 避免重复发送消息
         if (!mAnimationIsRunning) {
             mAnimationIsRunning = true;
@@ -565,7 +558,7 @@ public class WatchFace extends CanvasWatchFaceService {
                     - (System.currentTimeMillis() % ONE_SECOND_INTERVAL);
 
             long interval_ms = onAnimationSettingInterval(delayMs);
-
+//            Log.d(TAG, "启动下一次定时");
             mAnimationHandler.sendEmptyMessageDelayed(MSG_ANIMATION_FRAME_UPDATE, interval_ms);
         }
     }
