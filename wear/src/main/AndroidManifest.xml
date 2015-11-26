@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.magicinstall.wearable" >
 
-    <uses-feature android:name="android.hardware.type.watch" />
+    <!-- TODO 测试只可以用手机模式<uses-feature android:name="android.hardware.type.watch" />-->
     <!--<uses-feature android:name="android.hardware.bluetooth_le" android:required="true"/>-->
 
     <!-- Required to act as a custom watch face. -->
