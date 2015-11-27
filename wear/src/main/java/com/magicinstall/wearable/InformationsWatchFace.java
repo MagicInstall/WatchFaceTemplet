@@ -43,7 +43,7 @@ public class InformationsWatchFace extends GestureWatchFace{
     /**
      * 蓝牙状态对象
      */
-    BluetoothStatus mBluetoothStatus;
+//    BluetoothStatus mBluetoothStatus;
     private String mPhoneConnect = "Phone: Disconnected ";
     private String mPhoneBattery = "bat.---\n";
 
@@ -133,7 +133,7 @@ public class InformationsWatchFace extends GestureWatchFace{
         activateBroadcast(context);
 
         // 蓝牙启动BLE 连接
-        activateBluetooth(context);
+//        activateBluetooth(context);
 
         // 启动定位服务
 //        mLocationService = new LocationService(context);
@@ -297,34 +297,34 @@ public class InformationsWatchFace extends GestureWatchFace{
      * 激活BLE 连接取得电量
      * @param context
      */
-    private void activateBluetooth(Context context) {
-        mBluetoothStatus = new BluetoothStatus(context) {
-            /**
-             * 手机端电量变化事件
-             * @param batteryLevel 手机端的电量, 单位是百分比(10 = 10%, 100 = 100%, ...)
-             */
-            @Override
-            public void onBatteryLevelChanged(int batteryLevel) {
-                super.onBatteryLevelChanged(batteryLevel);
-//                Log.i("SensorMoor", "onBatteryLevelChanged:" + batteryLevel + "%");
-                mPhoneBattery = "bat." + batteryLevel + "%\n";
-            }
-
-            /**
-             * 手机连接状态变化事件
-             *
-             * @param isConnnected true = 已连接
-             */
-            @Override
-            public void onConnectStatusChanged(boolean isConnnected) {
-                super.onConnectStatusChanged(isConnnected);
-
-                mPhoneConnect = "Phone: "+ (isConnnected ? "Connected " : "Disconnected ");
-                if (!isConnnected) mPhoneBattery = "bat.---\n";
-            }
-        };
-        mBluetoothStatus.ConnectGATT();
-    }
+//    private void activateBluetooth(Context context) {
+//        mBluetoothStatus = new BluetoothStatus(context) {
+//            /**
+//             * 手机端电量变化事件
+//             * @param batteryLevel 手机端的电量, 单位是百分比(10 = 10%, 100 = 100%, ...)
+//             */
+//            @Override
+//            public void onBatteryLevelChanged(int batteryLevel) {
+//                super.onBatteryLevelChanged(batteryLevel);
+////                Log.i("SensorMoor", "onBatteryLevelChanged:" + batteryLevel + "%");
+//                mPhoneBattery = "bat." + batteryLevel + "%\n";
+//            }
+//
+//            /**
+//             * 手机连接状态变化事件
+//             *
+//             * @param isConnnected true = 已连接
+//             */
+//            @Override
+//            public void onConnectStatusChanged(boolean isConnnected) {
+//                super.onConnectStatusChanged(isConnnected);
+//
+//                mPhoneConnect = "Phone: "+ (isConnnected ? "Connected " : "Disconnected ");
+//                if (!isConnnected) mPhoneBattery = "bat.---\n";
+//            }
+//        };
+//        mBluetoothStatus.ConnectGATT();
+//    }
 
     /**
      * 启动共享数据接收
@@ -372,6 +372,27 @@ public class InformationsWatchFace extends GestureWatchFace{
     private void activateBroadcast(Context context) {
         mBroadcastReceiver = new BroadcastReceiver(context) {
             /**
+             * 收到手机电量变化广播事件
+             *
+             * @param level 电量, 单位是百分比(10 = 10%, 100 = 100%, ...);
+             */
+            @Override
+            public void onMobileBatteryChanged(int level) {
+                mPhoneBattery = "bat." + level + "%\n";
+            }
+
+            /**
+             * 收到手机连接状态变化广播事件
+             *
+             * @param isConnnected true = 已连接.
+             */
+            @Override
+            public void onMobileConnectionChanged(boolean isConnnected) {
+                mPhoneConnect = "Phone: "+ (isConnnected ? "Connected " : "Disconnected ");
+                if (!isConnnected) mPhoneBattery = "bat.---\n";
+            }
+
+            /**
              * 电量变化事件
              * </br>
              * 由于电压变化同样会触发哩个事件, 所以多次事件之间的电量值可能会一样.
@@ -412,22 +433,24 @@ public class InformationsWatchFace extends GestureWatchFace{
              *
              * @param state true = 已切换到飞鸡模式
              */
-            @Override
-            public void onAirplaneMode(boolean state) {
-                super.onAirplaneMode(state);
-                if (state == true) {
-                    // 关闭连接
-                    mBluetoothStatus.DisconnectGATT();
-
-                    mPhoneConnect = "Phone: "+ (mBluetoothStatus.getIsConnected() ? "Connected " : "Disconnected ");
-                    if (!mBluetoothStatus.getIsConnected()) mPhoneBattery = "bat.---\n";
-                } else {
-                    // 重连手机
-                    mBluetoothStatus.ConnectGATT();
-                }
-            }
+//            @Override
+//            public void onAirplaneMode(boolean state) {
+//                super.onAirplaneMode(state);
+//                if (state == true) {
+//                    // 关闭连接
+//                    mBluetoothStatus.DisconnectGATT();
+//
+//                    mPhoneConnect = "Phone: "+ (mBluetoothStatus.getIsConnected() ? "Connected " : "Disconnected ");
+//                    if (!mBluetoothStatus.getIsConnected()) mPhoneBattery = "bat.---\n";
+//                } else {
+//                    // 重连手机
+//                    mBluetoothStatus.ConnectGATT();
+//                }
+//            }
         };
         mBroadcastReceiver.ActivateReceiverWithType(new String[]{
+                        BroadcastReceiver.ACTION_MOBILE_BATTERY_CHANGED,
+                        BroadcastReceiver.ACTION_MOBILE_CONNECTION_CHANGED,
                         BroadcastReceiver.ACTION_BATTERY_CHANGED,
                         BroadcastReceiver.ACTION_BATTERY_LOW,
                         BroadcastReceiver.ACTION_BATTERY_OKAY,

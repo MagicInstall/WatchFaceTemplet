@@ -33,6 +33,8 @@ import java.util.UUID;
  * 用法很简单, 只需要用匿名继承哩个类, 重写onXXXChanged 方法就可以, 代码非常简洁.
  */
 public class BluetoothStatus {
+    private static final String TAG = "Bluetooth";
+
     /**
      * GATT 电量服务UUID
      * https://developer.bluetooth.org/gatt/services/Pages/ServiceViewer.aspx?u=org.bluetooth.service.battery_service.xml
@@ -77,16 +79,33 @@ public class BluetoothStatus {
 
     private Context mContext;
     private BluetoothAdapter mAdapter;
+
+
     /**
      *
      * @param context  传入Engine 的BaseContext.
      */
     public BluetoothStatus(Context context) {
+        // 连接服务
+//        context.bindService(new Intent(context, MobileInfoService.class), mServiceConnection, Context.BIND_AUTO_CREATE);
+
         mContext = context;
         // 取得蓝牙适配器对象
         mAdapter =  BluetoothAdapter.getDefaultAdapter();
         if (mAdapter == null) Log.e("Bluetooth", "Unable to get bluetooth adapter!");
     }
+
+    /**
+     * Service 的连接器
+     */
+//    private ServiceConnection mServiceConnection = new ServiceConnection() {
+//        public void onServiceConnected(ComponentName name, IBinder service) {
+//            Log.v(TAG, "onServiceConnected");
+//        }
+//        public void onServiceDisconnected(ComponentName name) {
+//            Log.v(TAG, "onServiceDisconnected");
+//        }
+//    };
 
     @Override
     protected void finalize() throws Throwable {
@@ -121,7 +140,7 @@ public class BluetoothStatus {
      */
     public void ConnectGATT() {
         if (mBluetoothGatt != null){
-            Log.w("Bluetooth", "already connected to Gatt!");
+            Log.w(TAG, "already connected to Gatt!");
             return;
         }
 
@@ -137,7 +156,7 @@ public class BluetoothStatus {
         }
         else {
             if (!mAdapter.isEnabled()) {
-                Log.w("Bluetooth", "Bluetooth adapter has Disabled!");
+                Log.w(TAG, "Bluetooth adapter has Disabled!");
 
                 // 延时发起连接
                 if (mWaitHandler == null) mWaitHandler = new Handler();
@@ -148,7 +167,7 @@ public class BluetoothStatus {
                             if (mAdapter.isEnabled()) connectGatt(); // 完成任务
                             else {
                                 mWaitHandler.postDelayed(this, 1000); // 继续等...
-                                Log.d("Bluetooth", "Wait for enable...");
+                                Log.d(TAG, "Wait for enable...");
                             }
 //                            // handler自带方法实现定时器
 //                            try {
@@ -164,7 +183,7 @@ public class BluetoothStatus {
                 mWaitHandler.postDelayed(mWaitRunnable, 1000); // 启动定时器
             }
             else
-                Log.e("Bluetooth", "Bluetooth adapter error!");
+                Log.e(TAG, "Bluetooth adapter error!");
         }
     }
 
@@ -179,7 +198,7 @@ public class BluetoothStatus {
         Set<BluetoothDevice> paired_devices = mAdapter.getBondedDevices();
         for (BluetoothDevice device : paired_devices) {
 
-            Log.i("Bluetooth", device.getName() + " " + device.getType() + " UUID:" + device.getUuids());
+            Log.i(TAG, device.getName() + " " + device.getType() + " UUID:" + device.getUuids());
 
             // 暂时未知有咩方法确定边只设备先至系当前配对嘅手机, 只取第一个成功建立GATT 嘅设备;
             // Ticwear 实际使用咗两个蓝牙端口(模式?)同iPhone 通信,
@@ -193,7 +212,7 @@ public class BluetoothStatus {
                     // 连接GATT
                     BluetoothGatt gatt = device.connectGatt(mContext, true, mGattCallback);
                     if (gatt != null) {
-                        Log.d("Bluetooth", "Connect " + device.getName() + " Gatt...");
+                        Log.d(TAG, "Connect " + device.getName() + " Gatt...");
 
                         break;
                     }
@@ -225,7 +244,7 @@ public class BluetoothStatus {
             if (newState == BluetoothProfile.STATE_CONNECTED) {
 //                if (!mIsConnected && mGattIsSuccess) onConnectStatusChanged(true);
                 mIsConnected = true;
-//                Log.i("Bluetooth", "Connect GATT successful");
+//                Log.i(TAG, "Connect GATT successful");
 
                 // mBluetoothGatt 只喺哩度赋值, 用于垃圾回收嗰时中止GATT 连接
                 mBluetoothGatt = gatt;
@@ -233,17 +252,17 @@ public class BluetoothStatus {
                 // 连接成功之后，我们应该立刻去寻找服务，只有寻找到服务之后，才可以和设备进行通信,
                 // 查找服务嘅过程系异步嘅, 需要D 时间, 当揾到服务之后会调用onServicesDiscovered.
                 boolean result = gatt.discoverServices();
-//                Log.i("Bluetooth", "discoverServices:" + result);
+//                Log.i(TAG, "discoverServices:" + result);
             }
             // 断开
             else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
 //                if (mIsConnected) onConnectStatusChanged(false);
-                Log.w("Bluetooth", "GATT has disconnected");
+                Log.w(TAG, "GATT has disconnected");
                 mIsConnected = false;
                 onConnectStatusChanged(false);
             }
             else {
-                Log.w("Bluetooth", "ConnectionState:" + newState);
+                Log.w(TAG, "ConnectionState:" + newState);
             }
         }
 
@@ -267,13 +286,13 @@ public class BluetoothStatus {
                 mGattIsSuccess = true;
                 onConnectStatusChanged(true);
 
-//                Log.i("Bluetooth", "Reading battery...");
+//                Log.i(TAG, "Reading battery...");
                 readBattery(gatt); // 读取电量操作
 
             }else {
 //                if (mGattIsSuccess) onConnectStatusChanged(false);
                 mGattIsSuccess = false;
-                Log.w("Bluetooth", "Gatt status: " + status);
+                Log.w(TAG, "Gatt status: " + status);
             }
         }
 
@@ -297,11 +316,11 @@ public class BluetoothStatus {
                 // 调用事件
                 onBatteryLevelChanged(mMobileBattery);
 
-//                Log.i("Bluetooth", "Mobile battery:" + mMobileBattery + "%");
+//                Log.i(TAG, "Mobile battery:" + mMobileBattery + "%");
 
                 // 将已经设置成启用属性改变通知的描述符写入GATT 设备, 就可以启动通知
                 boolean result = gatt.writeDescriptor(mBluetoothDescriptor);
-//                Log.d("Bluetooth", "writeDescriptor:" + result);
+//                Log.d(TAG, "writeDescriptor:" + result);
             }
         }
 
@@ -315,7 +334,7 @@ public class BluetoothStatus {
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
             super.onCharacteristicChanged(gatt, characteristic);
-//            Log.v("Bluetooth", "onCharacteristicChanged");
+//            Log.v(TAG, "onCharacteristicChanged");
 
             // 读取到值,根据UUID来判断读到的是什么值
             if (characteristic.getUuid().equals(BATTERY_LEVEL_CHARACTERISTIC_UUID)) {
@@ -324,7 +343,7 @@ public class BluetoothStatus {
                 // 调用事件
                 onBatteryLevelChanged(mMobileBattery);
 
-//                Log.i("Bluetooth", "Mobile battery:" + mMobileBattery + "%");
+//                Log.i(TAG, "Mobile battery:" + mMobileBattery + "%");
             }
         }
     };
@@ -336,7 +355,7 @@ public class BluetoothStatus {
         // 如上面所说，想要和一个学生通信，先知道他的班级（ServiceUUID）和学号（CharacUUID）
         BluetoothGattService batteryService = gatt.getService(BATTERY_SERVICE_UUID);
         if (batteryService == null) {
-            Log.e("Bluetooth", "Unable to get battery service!");
+            Log.e(TAG, "Unable to get battery service!");
             return;
         }
 
@@ -349,13 +368,13 @@ public class BluetoothStatus {
 
             // 注册电量改变通知
             if (!gatt.setCharacteristicNotification(batteryCharacteristic, true)) {
-                Log.w("Bluetooth", "Unable to set battery notification!");
+                Log.w(TAG, "Unable to set battery notification!");
                 return;
             }
             mBluetoothDescriptor = batteryCharacteristic
                     .getDescriptor(CHARACTERISTIC_UPDATE_NOTIFICATION_DESCRIPTOR_UUID);
             if (mBluetoothDescriptor == null) {
-                Log.w("Bluetooth", "Unable to get battery descriptor!");
+                Log.w(TAG, "Unable to get battery descriptor!");
                 return;
             }
             mBluetoothDescriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
@@ -364,7 +383,7 @@ public class BluetoothStatus {
              * 因为上边readCharacteristic 咗一次, GATT 读写系异步操作, 必需等上一次操作完成,
              * 再去writeDescriptor 先至唔会因为Device Busy 而返回false !
              * 所以将writeDescriptor 移至onCharacteristicRead 回调方法内.
-            Log.d("Bluetooth", "writeDescriptor:" + gatt.writeDescriptor(mBluetoothDescriptor));
+            Log.d(TAG, "writeDescriptor:" + gatt.writeDescriptor(mBluetoothDescriptor));
              */
         }
 

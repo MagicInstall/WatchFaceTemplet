@@ -1,8 +1,11 @@
 package com.magicinstall.wearable;
 
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ServiceConnection;
+import android.os.IBinder;
 import android.util.Log;
 
 import java.util.Set;
@@ -16,8 +19,17 @@ import java.util.Set;
  * 用法十分简单, 只需要匿名继承哩个类, 重写onXXXChanged 方法就可以, 代码非常简洁.
  */
 public class BroadcastReceiver extends android.content.BroadcastReceiver {
+    private static final String TAG = "Wing.Broadcast";
     Context mContext;
 
+    /**
+     * wing 定义嘅手机电量变化广播
+     */
+    public static final String ACTION_MOBILE_BATTERY_CHANGED = "magicinstall.intent.action.ACTION_MOBILE_BATTERY_CHANGED";
+    /**
+     * wing 定义嘅手机连接状态变化广播
+     */
+    public static final String ACTION_MOBILE_CONNECTION_CHANGED = "magicinstall.intent.action.ACTION_MOBILE_CONNECTION_CHANGED";
     /**
      * 充电状态，或者电池的电量发生变化
      */
@@ -79,6 +91,19 @@ public class BroadcastReceiver extends android.content.BroadcastReceiver {
 
 
     /**
+     * Service 的连接器
+     * 哩个连接器用嚟调用MobileInfoService 得到手机电量变化通知
+     */
+    private ServiceConnection mServiceConnection = new ServiceConnection() {
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            Log.v(TAG, "onServiceConnected");
+        }
+        public void onServiceDisconnected(ComponentName name) {
+            Log.v(TAG, "onServiceDisconnected");
+        }
+    };
+
+    /**
      * @param context 传入Engine 的BaseContext.
      */
     public BroadcastReceiver(Context context) {
@@ -99,6 +124,7 @@ public class BroadcastReceiver extends android.content.BroadcastReceiver {
      */
     public void DeactivateReceiver() {
         mContext.unregisterReceiver(this);
+        mContext.unbindService(mServiceConnection);
     }
 
     /**
@@ -106,11 +132,24 @@ public class BroadcastReceiver extends android.content.BroadcastReceiver {
      * @param actions 最好系写成BroadcastReceiver.ACTION_XXXX 的数组, 有助提高代码可读性.
      */
     public void ActivateReceiverWithType(String[] actions) {
-        // TODO 试下改成用xxxFilter.addAction , 而唔系一个Action 一个Filter
+        IntentFilter filter = new IntentFilter();
+        boolean need_bind = false;
+
         for (String a : actions) {
-            // 唔知点解唔可以读返回值, 一读就收唔到广播
-            mContext.registerReceiver(this, new IntentFilter(a));
+//            mContext.registerReceiver(this, new IntentFilter(a));
+            filter.addAction(a);
+
+            // 睇下使唔使连接后台服务
+            if (a.equals(ACTION_MOBILE_BATTERY_CHANGED) || a.equals(ACTION_MOBILE_CONNECTION_CHANGED))
+                need_bind = true;
+
         }
+        // 连接手机电量后台服务
+        if (need_bind)
+            mContext.bindService(new Intent(mContext, MobileInfoService.class), mServiceConnection, Context.BIND_AUTO_CREATE);
+
+        // TODO 唔知点解唔可以读返回值, 一读就收唔到广播
+        mContext.registerReceiver(this, filter);
     }
 
     /**
@@ -121,6 +160,19 @@ public class BroadcastReceiver extends android.content.BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         // Java 唔可以用String 作为case 值, 唯有硬编码
         switch (intent.getAction()) {
+            case "magicinstall.intent.action.ACTION_MOBILE_BATTERY_CHANGED":
+                Log.v("Broadcast", "Mobile battery level:" + intent.getExtras().getInt("level") + "%");
+                onMobileBatteryChanged(intent.getExtras().getInt("level"));
+                break;
+
+            case "magicinstall.intent.action.ACTION_MOBILE_CONNECTION_CHANGED":
+                Log.v("Broadcast",
+                        "Mobile isConnnected:" +
+                                intent.getExtras().getBoolean("isConnnected")
+                );
+                onMobileConnectionChanged(intent.getExtras().getBoolean("isConnnected"));
+                break;
+
             case "android.intent.action.BATTERY_CHANGED":
                 Log.v("Broadcast", "Battery level:" + intent.getExtras().getInt("level") + "%");
                 onBatteryChanged(
@@ -186,6 +238,20 @@ public class BroadcastReceiver extends android.content.BroadcastReceiver {
         }
 
     }
+
+    /**
+     * 收到手机电量变化广播事件
+     *
+     * @param level 电量, 单位是百分比(10 = 10%, 100 = 100%, ...);
+     */
+    public void onMobileBatteryChanged(int level) {}
+
+    /**
+     * 收到手机连接状态变化广播事件
+     *
+     * @param isConnnected true = 已连接.
+     */
+    public void onMobileConnectionChanged(boolean isConnnected) {}
 
     /**
      * 收到电量变化广播事件
