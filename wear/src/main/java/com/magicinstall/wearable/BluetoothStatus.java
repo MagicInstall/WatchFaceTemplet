@@ -24,8 +24,9 @@ import java.util.UUID;
  * 有可能取得嘅电量系其它设备嘅值 (-_-b)
  *
  * 注意:
- * 1. 如果手表未配对手机, 可能要喺配对之后重启一下手表!(主要系要重启表盘的进程);
- * 2. 由于切换至飞机模式会立即断开GATT 设备嘅连接,
+ * 1. 哩个类只供后台服务使用, 避免过多嘅BLE 连接超过系统限制;
+ * 2. 如果手表未配对手机, 可能要喺配对之后重启一下手表!(主要系要重启表盘的进程);
+ * 3. 由于切换至飞机模式会立即断开GATT 设备嘅连接,
  *    而且唔会自动重连, 仲要系冇任何事件提示,
  *    最好配合飞机模式广播使用,
  *    喺飞机模式关闭嘅事件入边重新连接.
@@ -86,26 +87,11 @@ public class BluetoothStatus {
      * @param context  传入Engine 的BaseContext.
      */
     public BluetoothStatus(Context context) {
-        // 连接服务
-//        context.bindService(new Intent(context, MobileInfoService.class), mServiceConnection, Context.BIND_AUTO_CREATE);
-
         mContext = context;
         // 取得蓝牙适配器对象
         mAdapter =  BluetoothAdapter.getDefaultAdapter();
         if (mAdapter == null) Log.e("Bluetooth", "Unable to get bluetooth adapter!");
     }
-
-    /**
-     * Service 的连接器
-     */
-//    private ServiceConnection mServiceConnection = new ServiceConnection() {
-//        public void onServiceConnected(ComponentName name, IBinder service) {
-//            Log.v(TAG, "onServiceConnected");
-//        }
-//        public void onServiceDisconnected(ComponentName name) {
-//            Log.v(TAG, "onServiceDisconnected");
-//        }
-//    };
 
     @Override
     protected void finalize() throws Throwable {
