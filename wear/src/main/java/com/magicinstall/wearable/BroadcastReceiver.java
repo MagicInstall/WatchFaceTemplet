@@ -118,13 +118,19 @@ public class BroadcastReceiver extends android.content.BroadcastReceiver {
         super.finalize();
     }
 
-
     /**
      * 停止接收所有广播.
      */
     public void DeactivateReceiver() {
-        mContext.unregisterReceiver(this);
-        mContext.unbindService(mServiceConnection);
+        // 重复调用可能会引起系统throw 出一个错误,
+        // 放走哩个错误会导致崩溃,
+        // 一定要catch 佢
+        try {
+            mContext.unregisterReceiver(this);
+            mContext.unbindService(mServiceConnection);
+        } catch (IllegalArgumentException e) {
+            Log.w(TAG, e.getMessage());
+        }
     }
 
     /**

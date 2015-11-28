@@ -143,7 +143,22 @@ public class InformationsWatchFace extends GestureWatchFace{
         mSystemVersionString = getSystemVersionName();
     }
 
-    /*
+    /**
+     * 表盘被系统回收的事件.
+     * </br>
+     * 唔需要调用父类方法.
+     */
+//    @Override
+//    public void onDestroy() {
+//        Log.v(TAG, "onDestroy");
+//        mBroadcastReceiver.DeactivateReceiver();
+//        mSensorMonitor.DeactivateSensors();
+//        mStepsObserver.DeactivateObserver();
+//        mWeatherObserver.DeactivateObserver();
+//        super.onDestroy();
+//    }
+
+/*
     @Override
     protected void finalize() throws Throwable {
         super.finalize();
